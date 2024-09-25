@@ -18,6 +18,7 @@ import {
   refreshAuthToken,
 } from "../../controllers/authController.js";
 import { verifyToken } from "../../middleware/verifyToken.js";
+import { grantAccess } from "../../middleware/permission.js";
 
 const router = express.Router();
 
@@ -40,10 +41,10 @@ router.post("/confirm-email-change", confirmEmailChange);
 
 // Protected Routes (Require Authentication)
 router.get("/check-auth", verifyToken, checkAuth);
-router.get("/me", verifyToken, getUserProfile);
+router.get("/me", verifyToken, grantAccess("readOwn", "profile"), getUserProfile);
 
 router.post("/change-password", verifyToken, changePassword);
-router.put("/update-profile", verifyToken, updateProfile);
+router.put("/update-profile", verifyToken, grantAccess("updateOwn", "profile"), updateProfile);
 
 router.post("/request-email-change", verifyToken, requestEmailChange);
 

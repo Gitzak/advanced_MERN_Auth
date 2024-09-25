@@ -23,6 +23,11 @@ const userSchema = new mongoose.Schema(
       required: [true, "Name is required"],
       trim: true,
     },
+    role: {
+      type: String,
+      enum: ['Admin', 'Employer', 'Client'],
+      default: 'Client',
+    },
     lastLogin: {
       type: Date,
       default: Date.now,
@@ -75,14 +80,8 @@ userSchema.pre("save", async function (next) {
     return next();
   }
   try {
-    console.log('====================================');
-    console.log("9bal : " + this.password);
-    console.log('====================================');
     const salt = await bcryptjs.genSalt(12);
     this.password = await bcryptjs.hash(this.password, salt);
-    
-    console.log("apres : " + this.password);
-
     next();
   } catch (error) {
     next(error);
