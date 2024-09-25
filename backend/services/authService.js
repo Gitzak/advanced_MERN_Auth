@@ -25,6 +25,7 @@ import {
   generateRefreshTokenAndSetCookie,
   generateTokenAndSetCookie,
 } from "../utils/generateTokenAndSetCookie.js";
+import { generateVerificationCode } from "../utils/verificationCode.js";
 
 // Registre new users
 export const signupService = async (userData, res) => {
@@ -40,9 +41,7 @@ export const signupService = async (userData, res) => {
     throw new ApiError("User already exists", 400);
   }
 
-  const verificationToken = Math.floor(
-    100000 + Math.random() * 900000
-  ).toString();
+  const verificationToken = generateVerificationCode();
 
   const newUser = {
     email,
@@ -195,9 +194,7 @@ export const resendVerificationEmailService = async (userId) => {
   }
 
   // Generate new verification token
-  const verificationToken = Math.floor(
-    100000 + Math.random() * 900000
-  ).toString();
+  const verificationToken = generateVerificationCode();
 
   user.verificationToken = verificationToken;
   user.verificationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours

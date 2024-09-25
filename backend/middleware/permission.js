@@ -6,11 +6,6 @@ export const grantAccess = (action, resource) => {
       const permission = ac.can(req.role)[action](resource);
       if (permission.granted) {
         req.permission = permission;
-
-        console.log('====================================');
-        console.log("permission " + JSON.stringify(permission));
-        console.log('====================================');
-
         next();
       } else {
         return res.status(403).json({
