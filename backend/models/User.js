@@ -25,8 +25,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['Admin', 'Employer', 'Client'],
-      default: 'Client',
+      enum: ["Admin", "Employer", "Client"],
+      default: "Client",
     },
     lastLogin: {
       type: Date,
@@ -85,6 +85,23 @@ userSchema.pre("save", async function (next) {
     next();
   } catch (error) {
     next(error);
+  }
+});
+
+// Pre-updateOne middleware to set password to undefined if isDeleted is set to true
+userSchema.pre("updateOne", function (next) {
+  try {
+    const update = this.getUpdate();
+
+    // Check if the update is setting isDeleted to true
+    if (update.isDeleted === true) {
+      // Set the password to undefined
+      update.password = undefined;
+    }
+
+    next();
+  } catch (error) {
+    next(error); // Pass the error to the next middleware
   }
 });
 

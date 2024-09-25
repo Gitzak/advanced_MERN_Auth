@@ -48,6 +48,6 @@ router.put("/update-profile", verifyToken, grantAccess("updateOwn", "profile"), 
 
 router.post("/request-email-change", verifyToken, requestEmailChange);
 
-router.delete("/delete-account", verifyToken, deleteAccount);
+router.post("/delete-account", verifyToken, deleteAccount);
 
 export default router;

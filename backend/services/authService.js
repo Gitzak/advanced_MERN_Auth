@@ -10,15 +10,9 @@ import {
   findUserByEmailChangeToken,
   findUserByResetToken,
   findUserByIdWithPassword,
+  findUserByIdWithIsDeleted,
+  updateUserById,
 } from "../repositories/userRepository.js";
-import {
-  sendVerificationEmail,
-  sendWelcomeEmail,
-  sendPasswordResetEmail,
-  sendResetSuccessEmail,
-  sendEmailChangeConfirmationEmail,
-  sendEmailChangeNotificationEmail,
-} from "../mailtrap/emails.js";
 import { generateRandomToken } from "../utils/generateRandomToken.js";
 import { ApiError } from "../utils/errors.js";
 import {
@@ -26,6 +20,15 @@ import {
   generateTokenAndSetCookie,
 } from "../utils/generateTokenAndSetCookie.js";
 import { generateVerificationCode } from "../utils/verificationCode.js";
+import {
+  sendEmailChangeConfirmationEmail,
+  sendEmailChangeNotificationEmail,
+  sendPasswordResetEmail,
+  sendResetSuccessEmail,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../utils/emails.js";
+import { generateUniqueDeletedEmail } from "../utils/generateUniqueDeletedEmail.js";
 
 // Registre new users
 export const signupService = async (userData, res) => {
@@ -252,7 +255,7 @@ export const updateProfileService = async (userId, updateData) => {
 
 // Delete Account Service
 export const deleteAccountService = async (userId) => {
-  const user = await findUserById(userId).select("+isDeleted");
+  const user = await findUserByIdWithIsDeleted(userId);
 
   if (!user) {
     throw new ApiError("User not found", 404);
@@ -262,24 +265,24 @@ export const deleteAccountService = async (userId) => {
     throw new ApiError("Account already deleted", 400);
   }
 
-  // Mark the user as deleted
-  user.isDeleted = true;
-  user.deletedAt = Date.now();
+  // Prepare the updates (including setting password to undefined)
+  const updates = {
+    isDeleted: true,
+    deletedAt: Date.now(),
+    email: await generateUniqueDeletedEmail(user.email),
+    password: undefined,
+    resetPasswordToken: undefined,
+    resetPasswordExpiresAt: undefined,
+    verificationToken: undefined,
+    verificationTokenExpiresAt: undefined,
+    emailChangeToken: undefined,
+    emailChangeTokenExpiresAt: undefined,
+    pendingEmailChange: undefined,
+    isVerified: false,
+  };
 
-  // Override the email to prevent conflicts
-  user.email = await generateUniqueDeletedEmail(user.email);
-
-  // Optionally, clear sensitive fields
-  user.password = undefined;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpiresAt = undefined;
-  user.verificationToken = undefined;
-  user.verificationTokenExpiresAt = undefined;
-  user.emailChangeToken = undefined;
-  user.emailChangeTokenExpiresAt = undefined;
-  user.pendingEmailChange = undefined;
-
-  await updateUser(user);
+  // Perform the update without validation
+  await updateUserById(userId, updates);
 };
 
 // Refresh Auth Token Service
@@ -339,9 +342,10 @@ export const confirmEmailChangeService = async (token) => {
   user.emailChangeToken = undefined;
   user.emailChangeTokenExpiresAt = undefined;
 
-  // TODO : send mail (your mail changed successfully)
-
   await updateUser(user);
+
+  // Send success email notification
+  await sendEmailChangeSuccessEmail(user.email);
 };
 
 // Request Email Change Service
@@ -379,6 +383,7 @@ export const requestEmailChangeService = async (userId, newEmail) => {
   await sendEmailChangeNotificationEmail(user.email, newEmail);
 };
 
+// todo : To test
 export const restoreAccountService = async (userId) => {
   const user = await User.findById(userId).select("+isDeleted");
 

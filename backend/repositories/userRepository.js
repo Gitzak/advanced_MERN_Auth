@@ -32,6 +32,10 @@ export const findUserById = async (id) => {
   return await User.findOne({ _id: id, isDeleted: { $ne: true } });
 };
 
+export const findUserByIdWithIsDeleted = async (userId) => {
+  return await User.findById(userId).select("+isDeleted");
+};
+
 export const findUserByIdWithPassword = async (userId) => {
   return await User.findById(userId).select("+password");
 };
@@ -60,4 +64,8 @@ export const findUserByResetToken = async (token) => {
     resetPasswordExpiresAt: { $gt: Date.now() },
     isDeleted: { $ne: true },
   });
+};
+
+export const updateUserById = async (userId, updates) => {
+  return await User.updateOne({ _id: userId }, updates);
 };

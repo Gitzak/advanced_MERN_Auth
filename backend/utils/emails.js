@@ -1,41 +1,17 @@
+import { sendEmail } from "./emailService.js";
 import {
-  VERIFICATION_EMAIL_TEMPLATE,
-  WELCOME_EMAIL_TEMPLATE,
-  PASSWORD_RESET_REQUEST_TEMPLATE,
-  PASSWORD_RESET_SUCCESS_TEMPLATE,
   EMAIL_CHANGE_CONFIRMATION_TEMPLATE,
   EMAIL_CHANGE_NOTIFICATION_TEMPLATE,
-  ACCOUNT_DELETION_TEMPLATE,
+  EMAIL_CHANGE_SUCCESS_TEMPLATE,
+  PASSWORD_RESET_REQUEST_TEMPLATE,
+  PASSWORD_RESET_SUCCESS_TEMPLATE,
+  VERIFICATION_EMAIL_TEMPLATE,
+  WELCOME_EMAIL_TEMPLATE,
 } from "./emailTemplates.js";
-import { mailtrapClient, sender } from "./mailtrap.config.js";
-import { ApiError } from "../utils/errors.js";
-
-// Generic email sending function
-const sendEmail = async ({ to, subject, html, category }) => {
-  const recipient = [{ email: to }];
-
-  try {
-    const response = await mailtrapClient.testing.send({
-      from: sender,
-      to: recipient,
-      subject,
-      html,
-      category,
-    });
-
-    console.log(`Email sent successfully to ${to}:`, response);
-  } catch (error) {
-    console.error(`Error sending email to ${to}:`, error);
-    throw new ApiError(`Error sending email: ${error.message}`, 500);
-  }
-};
 
 // Send Verification Email
 export const sendVerificationEmail = async (email, verificationToken) => {
-  const htmlContent = VERIFICATION_EMAIL_TEMPLATE.replace(
-    "{verificationCode}",
-    verificationToken
-  );
+  const htmlContent = VERIFICATION_EMAIL_TEMPLATE(verificationToken);
 
   await sendEmail({
     to: email,
@@ -47,17 +23,16 @@ export const sendVerificationEmail = async (email, verificationToken) => {
 
 // Send Welcome Email
 export const sendWelcomeEmail = async (email, name) => {
-  const htmlContent = WELCOME_EMAIL_TEMPLATE.replace("{name}", name);
+  const htmlContent = WELCOME_EMAIL_TEMPLATE(name);
 
   await sendEmail({
     to: email,
-    subject: "Welcome to Auth Company",
+    subject: "Welcome to DevAgency",
     html: htmlContent,
     category: "Welcome Email",
   });
 };
 
-// Send Password Reset Email
 export const sendPasswordResetEmail = async (email, resetURL) => {
   const htmlContent = PASSWORD_RESET_REQUEST_TEMPLATE.replace(
     "{resetURL}",
@@ -72,7 +47,6 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
   });
 };
 
-// Send Password Reset Success Email
 export const sendResetSuccessEmail = async (email) => {
   const htmlContent = PASSWORD_RESET_SUCCESS_TEMPLATE;
 
@@ -84,11 +58,12 @@ export const sendResetSuccessEmail = async (email) => {
   });
 };
 
-// Send Email Change Confirmation Email (to new email)
 export const sendEmailChangeConfirmationEmail = async (email, token) => {
+  const confirmationLink = `${process.env.CLIENT_URL}/confirm-email-change/${token}`;
+
   const htmlContent = EMAIL_CHANGE_CONFIRMATION_TEMPLATE.replace(
     "{confirmationLink}",
-    `${process.env.CLIENT_URL}/confirm-email-change/${token}`
+    confirmationLink
   );
 
   await sendEmail({
@@ -99,7 +74,6 @@ export const sendEmailChangeConfirmationEmail = async (email, token) => {
   });
 };
 
-// Send Email Change Notification Email (to old email)
 export const sendEmailChangeNotificationEmail = async (oldEmail, newEmail) => {
   const htmlContent = EMAIL_CHANGE_NOTIFICATION_TEMPLATE.replace(
     "{newEmail}",
@@ -114,14 +88,13 @@ export const sendEmailChangeNotificationEmail = async (oldEmail, newEmail) => {
   });
 };
 
-// Send Account Deletion Confirmation Email
-export const sendAccountDeletionEmail = async (email) => {
-  const htmlContent = ACCOUNT_DELETION_TEMPLATE;
+export const sendEmailChangeSuccessEmail = async (email) => {
+  const htmlContent = EMAIL_CHANGE_SUCCESS_TEMPLATE;
 
   await sendEmail({
     to: email,
-    subject: "Account Deletion Confirmation",
+    subject: "Your email has been changed successfully",
     html: htmlContent,
-    category: "Account Deletion",
+    category: "Email Change Success",
   });
 };

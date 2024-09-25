@@ -145,6 +145,7 @@ export const deleteAccount = async (req, res, next) => {
   try {
     await deleteAccountService(req.userId);
     res.clearCookie("token");
+    res.clearCookie("refreshToken");
     res.status(200).json({
       success: true,
       message: "Account deleted successfully",

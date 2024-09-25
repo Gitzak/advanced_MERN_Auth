@@ -1,3 +1,5 @@
+import { User } from "../models/User.js";
+
 export const generateUniqueDeletedEmail = async (originalEmail) => {
   // Generate a unique email by appending a timestamp or UUID
   const timestamp = Date.now();
