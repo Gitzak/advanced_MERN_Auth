@@ -120,7 +120,10 @@ export const loginService = async (email, password, res) => {
 
   generateTokenAndSetCookie(res, user._id);
 
-  generateRefreshTokenAndSetCookie(res, user._id);
+  const { refreshTokenExpiryDate } = generateRefreshTokenAndSetCookie(
+    res,
+    user._id
+  ); // Get expiry date
 
   user.lastLogin = new Date();
   await updateUser(user);
@@ -128,6 +131,7 @@ export const loginService = async (email, password, res) => {
   return {
     ...user._doc,
     password: undefined,
+    refreshTokenExpiryDate, // Return expiration date to the frontend
   };
 };
 

@@ -27,6 +27,10 @@ export const generateRefreshTokenAndSetCookie = (res, userId) => {
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
     });
 
+    const refreshTokenExpiryDate = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    ); // 7 days
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -34,7 +38,10 @@ export const generateRefreshTokenAndSetCookie = (res, userId) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return refreshToken;
+    return {
+      refreshToken,
+      refreshTokenExpiryDate, // Return the expiration date
+    };
   } catch (error) {
     console.error("Error generating refresh token and setting cookie:", error);
     throw new ApiError("Failed to generate refresh token", 500);

@@ -20,11 +20,12 @@ import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js
 
 export const login = async (req, res, next) => {
   try {
-    const user = await loginService(req.body.email, req.body.password, res);
+    const response = await loginService(req.body.email, req.body.password, res);
     res.status(200).json({
       success: true,
       message: "Logged in successfully",
-      user,
+      user: response.user,
+      refreshTokenExpiryDate: response.refreshTokenExpiryDate
     });
   } catch (error) {
     next(error);
