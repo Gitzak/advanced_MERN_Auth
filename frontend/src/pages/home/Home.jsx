@@ -845,7 +845,7 @@ const Navbar = () => {
               </Link>
 
               <Link
-                to="/resgister"
+                to="/register"
                 className="rounded-lg bg-primary px-7 py-3 text-base font-bold text-white hover:bg-opacity-90"
               >
                 Sign Up

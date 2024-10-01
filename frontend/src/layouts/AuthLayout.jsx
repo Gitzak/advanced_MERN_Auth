@@ -1,4 +1,6 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import Circles from "../components/circles/Circles";
 
 const AuthLayout = ({ children }) => {
   return (
@@ -8,16 +10,16 @@ const AuthLayout = ({ children }) => {
           <div className="w-full px-4">
             <div className="relative mx-auto max-w-[525px] overflow-hidden shadow-3 rounded-lg bg-white px-10 py-16 text-center dark:bg-dark-2 sm:px-12 md:px-[60px]">
               <div className="mb-10 text-center md:mb-16">
-                <a href="/#" className="mx-auto inline-block max-w-[160px]">
+                <Link to="/" className="mx-auto inline-block max-w-[160px]">
                   <img
                     src="https://cdn.tailgrids.com/2.0/image/assets/images/logo/logo-primary.svg"
                     alt="logo"
                   />
-                </a>
+                </Link>
               </div>
               {children}
-              <div>
-                <span className="absolute right-1 top-1">
+              <div className="">
+                {/* <span className="absolute right-1 top-1">
                   <svg
                     width="40"
                     height="40"
@@ -232,7 +234,9 @@ const AuthLayout = ({ children }) => {
                       fill="#3056D3"
                     />
                   </svg>
-                </span>
+                </span> */}
+                <Circles x="right-1" y="top-1"  />
+                <Circles x="bottom-1" y="left-1" />
               </div>
             </div>
           </div>
