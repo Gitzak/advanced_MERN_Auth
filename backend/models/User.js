@@ -93,6 +93,7 @@ userSchema.pre("updateOne", function (next) {
   try {
     const update = this.getUpdate();
 
+    // TODO : check why this is not working
     // Check if the update is setting isDeleted to true
     if (update.isDeleted === true) {
       // Set the password to undefined

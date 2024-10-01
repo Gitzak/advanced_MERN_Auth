@@ -23,6 +23,7 @@ import { generateVerificationCode } from "../utils/verificationCode.js";
 import {
   sendEmailChangeConfirmationEmail,
   sendEmailChangeNotificationEmail,
+  sendEmailChangeSuccessEmail,
   sendPasswordResetEmail,
   sendResetSuccessEmail,
   sendVerificationEmail,
