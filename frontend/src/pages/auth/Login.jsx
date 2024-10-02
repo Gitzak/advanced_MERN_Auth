@@ -34,7 +34,7 @@ const Login = () => {
             validationSchema={LoginSchema}
             onSubmit={async (values, { setSubmitting }) => {
               try {
-                await login(values, navigate);
+                login(values, navigate);
               } catch (error) {
                 // Handle any additional errors if needed
                 // toast.error("An error occurred during login.");

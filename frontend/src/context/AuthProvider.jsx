@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import AuthContext from "./AuthContext";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { checkAuthApi, loginApi, logoutApi } from "../api/auth";
+import { checkAuthApi, confirmEmailCodeApi, loginApi, logoutApi, registerApi } from "../api/auth";
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // User data
@@ -20,7 +20,7 @@ const AuthProvider = ({ children }) => {
           localStorage.clear();
 
           // Check if the current route is a public route (e.g., /login, /register)
-          const publicPaths = ["/login", "/register"];
+          const publicPaths = ["/login", "/register", "/confirm-email"];
           if (!publicPaths.includes(location.pathname)) {
             navigate("/login"); // Redirect to login if the session has expired and not on a public route
           }
@@ -66,6 +66,48 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // Register function
+  const register = async (userData, navigateFn) => {
+    try {
+      const data = await registerApi(
+        userData.name,
+        userData.email,
+        userData.password
+      );
+
+      if (data.success) {
+        navigateFn("/confirm-email");
+        toast.success(
+          "Registered successfully! Please check your email for the confirmation code."
+        );
+      } else {
+        toast.error(data.message || "Registration failed.");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error("An error occurred during registration. Please try again.");
+    }
+  };
+
+  // Confirm email function
+  const confirmEmail = async (code, navigateFn) => {
+    try {
+      const data = await confirmEmailCodeApi(code); // Call the API to confirm the email
+
+      if (data.success) {
+        toast.success("Email verified successfully!");
+        navigateFn("/dashboard"); // Navigate to the dashboard after successful confirmation
+      } else {
+        toast.error(data.message || "Invalid code, please try again.");
+      }
+    } catch (error) {
+      console.error("Email confirmation error:", error);
+      toast.error(
+        "An error occurred during email confirmation. Please try again."
+      );
+    }
+  };
+
   const logout = async (navigateFn) => {
     try {
       const data = await logoutApi(); // Call the logout API
@@ -85,7 +127,7 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, confirmEmail, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

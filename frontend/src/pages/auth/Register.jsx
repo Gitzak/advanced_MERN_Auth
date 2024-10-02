@@ -1,11 +1,12 @@
+import { Helmet } from "react-helmet-async";
 import { useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import AuthLayout from "../../layouts/AuthLayout";
 import InputBox from "../../components/inputBox/InputBox";
 import AuthContext from "../../context/AuthContext";
-import { Helmet } from "react-helmet-async";
+import { toast } from "react-toastify";
 
 // Yup schema for validation
 const RegisterSchema = Yup.object().shape({
@@ -20,33 +21,13 @@ const RegisterSchema = Yup.object().shape({
 });
 
 const Register = () => {
-  const { login } = useContext(AuthContext); // Or use a separate register function
+  const navigate = useNavigate();
+  const { register } = useContext(AuthContext);
 
   const handleRegister = async (values, { setSubmitting }) => {
     try {
-      // Implement your registration API call here
-      // For example:
-      // const response = await registerApi(values.name, values.email, values.password);
-
-      // Assuming registration also logs the user in:
-      // if (response.success) {
-      //   await login({ email: values.email, password: values.password }, () => {});
-      // }
-
-      // For demonstration, simulate successful registration and login:
-      const simulatedResponse = {
-        success: true,
-        user: { id: "123", name: values.name, email: values.email },
-      };
-
-      if (simulatedResponse.success) {
-        login({ email: values.email, password: values.password }, () => {});
-        toast.success("Registered and logged in successfully!");
-      } else {
-        toast.error(simulatedResponse.message || "Registration failed");
-      }
+      await register(values, navigate);
     } catch (error) {
-      console.error("Registration error:", error);
       toast.error("An unexpected error occurred during registration.");
     } finally {
       setSubmitting(false);
@@ -59,7 +40,7 @@ const Register = () => {
         <title>Register - MERN APP</title>
       </Helmet>
       <AuthLayout>
-        <div className="">
+        <div className="register-container">
           <Formik
             initialValues={{
               name: "",
@@ -148,9 +129,35 @@ const Register = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90"
+                    className="w-full cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90 flex items-center justify-center"
                   >
-                    {isSubmitting ? "Registering..." : "Sign Up"}
+                    {isSubmitting ? (
+                      <>
+                        <svg
+                          className="animate-spin h-5 w-5 mr-2 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8H4z"
+                          ></path>
+                        </svg>
+                        Submitting...
+                      </>
+                    ) : (
+                      "Register"
+                    )}
                   </button>
                 </div>
               </Form>

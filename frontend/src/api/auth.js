@@ -26,6 +26,42 @@ export const loginApi = async (email, password) => {
   }
 };
 
+// API call to register a new user
+export const registerApi = async (name, email, password) => {
+  try {
+    const response = await axiosInstance.post("/auth/signup", {
+      name,
+      email,
+      password,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    } else {
+      throw new Error("Network error. Please try again later.");
+    }
+  }
+};
+
+// Function to verify email using the 6-digit code
+export const confirmEmailCodeApi = async (code) => {
+  try {
+    const response = await axiosInstance.post("/auth/verify-email", {
+      code,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    } else {
+      throw new Error("Network error. Please try again later.");
+    }
+  }
+};
+
 // API call to check authentication
 export const checkAuthApi = async () => {
   const refreshTokenExpiry = localStorage.getItem("refreshTokenExpiry");

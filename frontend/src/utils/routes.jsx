@@ -6,6 +6,7 @@ import Profile from "../pages/profile/Profiles";
 import Home from "../pages/home/Home";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
+import ConfirmEmail from "../pages/auth/ConfirmEmail";
 
 // Array for public routes
 export const publicRoutes = [
@@ -23,6 +24,14 @@ export const publicRoutes = [
     element: (
       <PublicRoute>
         <Register />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/confirm-email",
+    element: (
+      <PublicRoute>
+        <ConfirmEmail />
       </PublicRoute>
     ),
   },
