@@ -14,15 +14,16 @@ const AuthProvider = ({ children }) => {
       try {
         const refreshTokenExpiry = localStorage.getItem("refreshTokenExpiry");
 
-        console.log('====================================');
-        console.log(refreshTokenExpiry);
-        console.log('====================================');
-
         // Check if the refresh token expiration date exists and is still valid
         if (!refreshTokenExpiry || new Date(refreshTokenExpiry) < new Date()) {
           setUser(null);
           localStorage.clear();
-          navigate("/login"); // Redirect to login if the session has expired
+
+          // Check if the current route is a public route (e.g., /login, /register)
+          const publicPaths = ["/login", "/register"];
+          if (!publicPaths.includes(location.pathname)) {
+            navigate("/login"); // Redirect to login if the session has expired and not on a public route
+          }
           return;
         }
 
