@@ -2,11 +2,9 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import { useContext } from "react";
 
 const Profile = () => {
-
   return (
     <DashboardLayout>
-      <h1 className="text-2xl mb-4">Profile</h1>
-      <p>Email: </p>
+      <h1 className="text-3xl">Profile</h1>
     </DashboardLayout>
   );
 };
