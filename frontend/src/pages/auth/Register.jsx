@@ -1,11 +1,11 @@
-// src/pages/auth/Register.jsx
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import AuthLayout from "../../layouts/AuthLayout";
-import InputBox from "../../components/inputBox/InputBox"; // Custom Input component
+import InputBox from "../../components/inputBox/InputBox";
 import AuthContext from "../../context/AuthContext";
+import { Helmet } from "react-helmet-async";
 
 // Yup schema for validation
 const RegisterSchema = Yup.object().shape({
@@ -54,113 +54,118 @@ const Register = () => {
   };
 
   return (
-    <AuthLayout>
-      <div className="">
-        <Formik
-          initialValues={{
-            name: "",
-            email: "",
-            password: "",
-            confirmPassword: "",
-          }}
-          validationSchema={RegisterSchema}
-          onSubmit={handleRegister}
-        >
-          {({ isSubmitting }) => (
-            <Form>
-              <h1 className="mt-3 mb-4 text-2xl font-semibold text-gray-700 dark:text-white">
-                Register
-              </h1>
+    <>
+      <Helmet>
+        <title>Register - MERN APP</title>
+      </Helmet>
+      <AuthLayout>
+        <div className="">
+          <Formik
+            initialValues={{
+              name: "",
+              email: "",
+              password: "",
+              confirmPassword: "",
+            }}
+            validationSchema={RegisterSchema}
+            onSubmit={handleRegister}
+          >
+            {({ isSubmitting }) => (
+              <Form>
+                <h1 className="mt-3 mb-4 text-2xl font-semibold text-gray-700 dark:text-white">
+                  Register
+                </h1>
 
-              {/* Name Field */}
-              <Field name="name">
-                {({ field }) => (
-                  <InputBox
-                    type="text"
-                    name="name"
-                    placeholder="Name"
-                    {...field}
-                  />
-                )}
-              </Field>
-              <ErrorMessage
-                name="name"
-                component="div"
-                className="text-red-500 w-full text-left mb-2"
-              />
+                {/* Name Field */}
+                <Field name="name">
+                  {({ field }) => (
+                    <InputBox
+                      type="text"
+                      name="name"
+                      placeholder="Name"
+                      {...field}
+                    />
+                  )}
+                </Field>
+                <ErrorMessage
+                  name="name"
+                  component="div"
+                  className="text-red-500 w-full text-left mb-2"
+                />
 
-              {/* Email Field */}
-              <Field name="email">
-                {({ field }) => (
-                  <InputBox
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    {...field}
-                  />
-                )}
-              </Field>
-              <ErrorMessage
-                name="email"
-                component="div"
-                className="text-red-500 w-full text-left mb-2"
-              />
+                {/* Email Field */}
+                <Field name="email">
+                  {({ field }) => (
+                    <InputBox
+                      type="email"
+                      name="email"
+                      placeholder="Email"
+                      {...field}
+                    />
+                  )}
+                </Field>
+                <ErrorMessage
+                  name="email"
+                  component="div"
+                  className="text-red-500 w-full text-left mb-2"
+                />
 
-              {/* Password Field */}
-              <Field name="password">
-                {({ field }) => (
-                  <InputBox
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    {...field}
-                  />
-                )}
-              </Field>
-              <ErrorMessage
-                name="password"
-                component="div"
-                className="text-red-500 w-full text-left mb-2"
-              />
+                {/* Password Field */}
+                <Field name="password">
+                  {({ field }) => (
+                    <InputBox
+                      type="password"
+                      name="password"
+                      placeholder="Password"
+                      {...field}
+                    />
+                  )}
+                </Field>
+                <ErrorMessage
+                  name="password"
+                  component="div"
+                  className="text-red-500 w-full text-left mb-2"
+                />
 
-              {/* Confirm Password Field */}
-              <Field name="confirmPassword">
-                {({ field }) => (
-                  <InputBox
-                    type="password"
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    {...field}
-                  />
-                )}
-              </Field>
-              <ErrorMessage
-                name="confirmPassword"
-                component="div"
-                className="text-red-500 w-full text-left mb-2"
-              />
+                {/* Confirm Password Field */}
+                <Field name="confirmPassword">
+                  {({ field }) => (
+                    <InputBox
+                      type="password"
+                      name="confirmPassword"
+                      placeholder="Confirm Password"
+                      {...field}
+                    />
+                  )}
+                </Field>
+                <ErrorMessage
+                  name="confirmPassword"
+                  component="div"
+                  className="text-red-500 w-full text-left mb-2"
+                />
 
-              <div className="mb-10">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90"
-                >
-                  {isSubmitting ? "Registering..." : "Sign Up"}
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
+                <div className="mb-10">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90"
+                  >
+                    {isSubmitting ? "Registering..." : "Sign Up"}
+                  </button>
+                </div>
+              </Form>
+            )}
+          </Formik>
 
-        <p className="text-base text-body-color dark:text-dark-6">
-          <span className="pr-0.5">Already have an account?</span>
-          <Link to="/login" className="text-primary hover:underline">
-            Log In
-          </Link>
-        </p>
-      </div>
-    </AuthLayout>
+          <p className="text-base text-body-color dark:text-dark-6">
+            <span className="pr-0.5">Already have an account?</span>
+            <Link to="/login" className="text-primary hover:underline">
+              Log In
+            </Link>
+          </p>
+        </div>
+      </AuthLayout>
+    </>
   );
 };
 

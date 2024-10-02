@@ -1,75 +1,43 @@
-import { Routes, Route } from "react-router-dom"; // No BrowserRouter here
-import PrivateRoute from "./utils/PrivateRoute";
-import PublicRoute from "./utils/PublicRoute"; // Import PublicRoute
-
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import Dashboard from "./pages/dashboard/Dashboard";
-import Profile from "./pages/profile/Profiles";
-import Home from "./pages/home/Home";
+import { HelmetProvider } from "react-helmet-async";
+import { Routes, Route } from "react-router-dom";
 import AuthProvider from "./context/AuthProvider";
-
-// Import ToastContainer and CSS
 import { ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
+
+// Import routes
+import { publicRoutes, privateRoutes } from "./utils/routes";
 
 function App() {
   return (
-    <AuthProvider>
-      {/* ToastContainer should be placed once, ideally here */}
-      <ToastContainer 
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored" // Optional: Choose a theme
-      />
-      
-      <Routes>
-        <Route path="/" element={<Home />} />
-        
-        {/* Public Routes */}
-        <Route 
-          path="/login" 
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/register" 
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          } 
+    <HelmetProvider>
+      <AuthProvider>
+        {/* ToastContainer should be placed once, ideally here */}
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
         />
 
-        {/* Private Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <Profile />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </AuthProvider>
+        <Routes>
+          {/* Map through public routes */}
+          {publicRoutes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
+
+          {/* Map through private routes */}
+          {privateRoutes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
+        </Routes>
+      </AuthProvider>
+    </HelmetProvider>
   );
 }
 

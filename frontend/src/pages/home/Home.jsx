@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 const Home = () => {
   return (
     <>
+      <Helmet>
+        <title>Home - React APP - MERN Advanced Auth</title>
+      </Helmet>
       <Navbar />
       <div className="relative bg-white pb-[110px] pt-[120px] dark:bg-dark lg:pt-[250px]">
         <div className="container">

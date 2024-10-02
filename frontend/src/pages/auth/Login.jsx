@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -22,115 +23,120 @@ const Login = () => {
   const { login } = useContext(AuthContext);
 
   return (
-    <AuthLayout>
-      <div className="">
-        <Formik
-          initialValues={{ email: "", password: "" }}
-          validationSchema={LoginSchema}
-          onSubmit={async (values, { setSubmitting }) => {
-            try {
-              await login(values, navigate);
-            } catch (error) {
-              // Handle any additional errors if needed
-              // toast.error("An error occurred during login.");
-              console.log(error);
-            }
-            setSubmitting(false); // Formik's submission handling
-          }}
-        >
-          {({ isSubmitting }) => (
-            <Form>
-              <h1 className="mt-3 mb-4 text-2xl font-semibold text-gray-700 dark:text-white">
-                Login
-              </h1>
+    <>
+      <Helmet>
+        <title>Login - MERN APP</title>
+      </Helmet>
+      <AuthLayout>
+        <div className="">
+          <Formik
+            initialValues={{ email: "", password: "" }}
+            validationSchema={LoginSchema}
+            onSubmit={async (values, { setSubmitting }) => {
+              try {
+                await login(values, navigate);
+              } catch (error) {
+                // Handle any additional errors if needed
+                // toast.error("An error occurred during login.");
+                console.log(error);
+              }
+              setSubmitting(false); // Formik's submission handling
+            }}
+          >
+            {({ isSubmitting }) => (
+              <Form>
+                <h1 className="mt-3 mb-4 text-2xl font-semibold text-gray-700 dark:text-white">
+                  Login
+                </h1>
 
-              {/* Email Field */}
-              <Field name="email">
-                {({ field }) => (
-                  <InputBox
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    {...field} // Spread Formik's field props
-                  />
-                )}
-              </Field>
-              <ErrorMessage
-                name="email"
-                component="div"
-                className="text-red-500 w-full text-left mb-2"
-              />
-
-              {/* Password Field */}
-              <Field name="password">
-                {({ field }) => (
-                  <InputBox
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    {...field} // Spread Formik's field props
-                  />
-                )}
-              </Field>
-              <ErrorMessage
-                name="password"
-                component="div"
-                className="text-red-500 w-full text-left mb-2"
-              />
-
-              <div className="mb-10">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90 flex items-center justify-center"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <svg
-                        className="animate-spin h-5 w-5 mr-2 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8H4z"
-                        ></path>
-                      </svg>
-                      Submitting...
-                    </>
-                  ) : (
-                    "Sign In"
+                {/* Email Field */}
+                <Field name="email">
+                  {({ field }) => (
+                    <InputBox
+                      type="email"
+                      name="email"
+                      placeholder="Email"
+                      {...field} // Spread Formik's field props
+                    />
                   )}
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
+                </Field>
+                <ErrorMessage
+                  name="email"
+                  component="div"
+                  className="text-red-500 w-full text-left mb-2"
+                />
 
-        <a
-          href="/#"
-          className="mb-2 inline-block text-base text-dark hover:text-primary hover:underline dark:text-white"
-        >
-          Forget Password?
-        </a>
-        <p className="text-base text-body-color dark:text-dark-6">
-          <span className="pr-0.5">Not a member yet?</span>
-          <Link to="/register" className="text-primary hover:underline">
-            Sign Up
-          </Link>
-        </p>
-      </div>
-    </AuthLayout>
+                {/* Password Field */}
+                <Field name="password">
+                  {({ field }) => (
+                    <InputBox
+                      type="password"
+                      name="password"
+                      placeholder="Password"
+                      {...field} // Spread Formik's field props
+                    />
+                  )}
+                </Field>
+                <ErrorMessage
+                  name="password"
+                  component="div"
+                  className="text-red-500 w-full text-left mb-2"
+                />
+
+                <div className="mb-10">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90 flex items-center justify-center"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg
+                          className="animate-spin h-5 w-5 mr-2 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8H4z"
+                          ></path>
+                        </svg>
+                        Submitting...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </button>
+                </div>
+              </Form>
+            )}
+          </Formik>
+
+          <a
+            href="/#"
+            className="mb-2 inline-block text-base text-dark hover:text-primary hover:underline dark:text-white"
+          >
+            Forget Password?
+          </a>
+          <p className="text-base text-body-color dark:text-dark-6">
+            <span className="pr-0.5">Not a member yet?</span>
+            <Link to="/register" className="text-primary hover:underline">
+              Sign Up
+            </Link>
+          </p>
+        </div>
+      </AuthLayout>
+    </>
   );
 };
 
