@@ -5,6 +5,8 @@ const AuthContext = createContext({
   login: () => {},
   register: () => {},
   confirmEmail: () => {},
+  resetPassword: () => {},
+  resetPasswordWithToken: () => {},
   logout: () => {},
   loading: true,
 });

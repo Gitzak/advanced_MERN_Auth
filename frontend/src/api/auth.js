@@ -62,6 +62,40 @@ export const confirmEmailCodeApi = async (code) => {
   }
 };
 
+// API call to confirm the reset password
+export const sendResetPasswordLinkApi = async (email) => {
+  try {
+    const response = await axiosInstance.post("/auth/forgot-password", {
+      email,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    } else {
+      throw new Error("Network error. Please try again later.");
+    }
+  }
+};
+
+// API call to reset password with token
+export const resetPasswordApi = async (token, password) => {
+  try {
+    const response = await axiosInstance.post(`/auth/reset-password/${token}`, {
+      password,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    } else {
+      throw new Error("Network error. Please try again later.");
+    }
+  }
+};
+
 // API call to check authentication
 export const checkAuthApi = async () => {
   const refreshTokenExpiry = localStorage.getItem("refreshTokenExpiry");

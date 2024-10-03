@@ -9,7 +9,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Allow requests from your front-end port
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // Allow requests from your front-end port
     credentials: true, // Allow credentials (cookies, headers, etc.)
   })
 );

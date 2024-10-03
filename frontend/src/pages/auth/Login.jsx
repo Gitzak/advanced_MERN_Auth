@@ -122,12 +122,12 @@ const Login = () => {
             )}
           </Formik>
 
-          <a
-            href="/#"
+          <Link
+            to="/forget-password"
             className="mb-2 inline-block text-base text-dark hover:text-primary hover:underline dark:text-white"
           >
             Forget Password?
-          </a>
+          </Link>
           <p className="text-base text-body-color dark:text-dark-6">
             <span className="pr-0.5">Not a member yet?</span>
             <Link to="/register" className="text-primary hover:underline">

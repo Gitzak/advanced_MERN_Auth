@@ -2,7 +2,15 @@ import { useState, useEffect } from "react";
 import AuthContext from "./AuthContext";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { checkAuthApi, confirmEmailCodeApi, loginApi, logoutApi, registerApi } from "../api/auth";
+import {
+  checkAuthApi,
+  confirmEmailCodeApi,
+  loginApi,
+  logoutApi,
+  registerApi,
+  resetPasswordApi,
+  sendResetPasswordLinkApi,
+} from "../api/auth";
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // User data
@@ -20,7 +28,7 @@ const AuthProvider = ({ children }) => {
           localStorage.clear();
 
           // Check if the current route is a public route (e.g., /login, /register)
-          const publicPaths = ["/login", "/register", "/confirm-email"];
+          const publicPaths = getAllPublicPaths();
           if (!publicPaths.includes(location.pathname)) {
             navigate("/login"); // Redirect to login if the session has expired and not on a public route
           }
@@ -108,6 +116,38 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // Call the API to confirm the reset code
+  const resetPassword = async (email, navigateFn) => {
+    try {
+      const data = await sendResetPasswordLinkApi(email);
+
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || "Invalid email, please try again.");
+      }
+    } catch (error) {
+      console.error("Reset password confirmation error:", error);
+      toast.error("An error occurred, please try again.");
+    }
+  };
+
+  const resetPasswordWithToken = async (token, newPassword, navigateFn) => {
+    try {
+      const data = await resetPasswordApi(token, newPassword); // Call the API to reset password
+
+      if (data.success) {
+        toast.success(data.message);
+        navigateFn("/login"); // Redirect to login after successful password reset
+      } else {
+        toast.error(data.message || "Password reset failed, please try again.");
+      }
+    } catch (error) {
+      console.error("Password reset error:", error);
+      toast.error("An error occurred, please try again.");
+    }
+  };
+
   const logout = async (navigateFn) => {
     try {
       const data = await logoutApi(); // Call the logout API
@@ -127,7 +167,18 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, confirmEmail, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        confirmEmail,
+        resetPassword,
+        resetPasswordWithToken,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -7,6 +7,8 @@ import Home from "../pages/home/Home";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 import ConfirmEmail from "../pages/auth/ConfirmEmail";
+import ForgetPassword from "../pages/auth/ForgetPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
 // Array for public routes
 export const publicRoutes = [
@@ -35,7 +37,25 @@ export const publicRoutes = [
       </PublicRoute>
     ),
   },
+  {
+    path: "/forget-password",
+    element: (
+      <PublicRoute>
+        <ForgetPassword />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/reset-password/:token",
+    element: (
+      <PublicRoute>
+        <ResetPassword />
+      </PublicRoute>
+    ),
+  }, // Add this route
 ];
+
+export const getAllPublicPaths = () => publicRoutes.map((route) => route.path);
 
 // Array for private routes
 export const privateRoutes = [
