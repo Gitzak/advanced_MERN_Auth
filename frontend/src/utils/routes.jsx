@@ -9,6 +9,7 @@ import PublicRoute from "./PublicRoute";
 import ConfirmEmail from "../pages/auth/ConfirmEmail";
 import ForgetPassword from "../pages/auth/ForgetPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
+import EditProfile from "../pages/profile/EditProfile";
 
 // Array for public routes
 export const publicRoutes = [
@@ -72,6 +73,14 @@ export const privateRoutes = [
     element: (
       <PrivateRoute>
         <Profile />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/edit-profile",
+    element: (
+      <PrivateRoute>
+        <EditProfile />
       </PrivateRoute>
     ),
   },

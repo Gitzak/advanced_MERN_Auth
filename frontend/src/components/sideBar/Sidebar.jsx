@@ -156,7 +156,7 @@ export default function Sidebar() {
               src={`https://ui-avatars.com/api/?name=${user?.name?.slice(
                 0,
                 1
-              )}&background=random&size=40`}
+              )}&background=00CCDD&color=3C3D37&font-size=0.55`}
               alt="User avatar"
             />
             <div>

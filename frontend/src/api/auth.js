@@ -96,6 +96,22 @@ export const resetPasswordApi = async (token, password) => {
   }
 };
 
+// API call to update user profile (name)
+export const updateUserApi = async (name) => {
+  try {
+    const response = await axiosInstance.put("/auth/update-profile", { name });
+
+    // Handle success or error responses
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    } else {
+      throw new Error("Network error. Please try again later.");
+    }
+  }
+};
+
 // API call to check authentication
 export const checkAuthApi = async () => {
   const refreshTokenExpiry = localStorage.getItem("refreshTokenExpiry");

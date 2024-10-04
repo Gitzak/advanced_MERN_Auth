@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import Sidebar from "../components/sideBar/Sidebar";
-import { Search, Bell, ChevronDown, Settings, LogOut, X } from "lucide-react";
+import { Search, Bell, ChevronDown, User, LogOut, X } from "lucide-react";
 import AuthContext from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -115,7 +115,7 @@ const DashboardLayout = ({ children }) => {
                   src={`https://ui-avatars.com/api/?name=${user?.name?.slice(
                     0,
                     1
-                  )}&background=random&size=40`}
+                  )}&background=6439FF&color=FFF&font-size=0.55`}
                   alt="User avatar"
                 />
                 <span>{user.name}</span>
@@ -124,11 +124,11 @@ const DashboardLayout = ({ children }) => {
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
                   <Link
-                    to="/settings"
+                    to="/edit-profile"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                   >
-                    <Settings size={16} className="mr-2" />
-                    Settings
+                    <User size={16} className="mr-2" />
+                    Edit profile
                   </Link>
                   <a
                     href="#"
@@ -145,7 +145,9 @@ const DashboardLayout = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 bg-gray-100">{children}</main>
+        <main className="flex-1 p-6 mt-1 bg-gray-50 w-full">
+          {children}
+        </main>
       </div>
     </div>
   );

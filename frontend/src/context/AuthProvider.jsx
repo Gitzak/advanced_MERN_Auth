@@ -10,6 +10,7 @@ import {
   registerApi,
   resetPasswordApi,
   sendResetPasswordLinkApi,
+  updateUserApi,
 } from "../api/auth";
 
 const AuthProvider = ({ children }) => {
@@ -148,6 +149,23 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = async (name) => {
+    try {
+      const data = await updateUserApi(name); // Call the API function
+
+      if (data.success) {
+        // Update user in context
+        setUser({ ...user, name: data.user.name });
+        toast.success("Profile updated successfully!");
+      } else {
+        throw new Error(data.message || "Failed to update profile.");
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error(error.message || "An error occurred. Please try again.");
+    }
+  };
+
   const logout = async (navigateFn) => {
     try {
       const data = await logoutApi(); // Call the logout API
@@ -175,6 +193,7 @@ const AuthProvider = ({ children }) => {
         confirmEmail,
         resetPassword,
         resetPasswordWithToken,
+        updateUser,
         logout,
         loading,
       }}

@@ -7,6 +7,7 @@ const AuthContext = createContext({
   confirmEmail: () => {},
   resetPassword: () => {},
   resetPasswordWithToken: () => {},
+  updateUser: () => {},
   logout: () => {},
   loading: true,
 });
