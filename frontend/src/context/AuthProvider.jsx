@@ -4,10 +4,12 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {
   checkAuthApi,
+  confirmEmailChangeApi,
   confirmEmailCodeApi,
   loginApi,
   logoutApi,
   registerApi,
+  requestEmailChangeApi,
   resetPasswordApi,
   sendResetPasswordLinkApi,
   updateUserApi,
@@ -166,6 +168,42 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const requestEditEmail = async (email) => {
+    try {
+      const data = await requestEmailChangeApi(email); // Call the API function
+      if (data.success) {
+        setUser({ ...user, pendingEmailChange: data.user.pendingEmailChange });
+        toast.success(data.message);
+      } else {
+        throw new Error(data.message || "Failed to update profile.");
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error(error.message || "An error occurred. Please try again.");
+    }
+  };
+
+  const confirmEmailChange = async (token) => {
+    try {
+      const data = await confirmEmailChangeApi(token);
+
+      if (data.success) {
+        setUser((prevUser) => ({ ...prevUser, email: data.user.email }));
+        return { success: true, message: data.message };
+      } else {
+        return {
+          success: false,
+          message: data.message || "Token is invalid or expired.",
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || "An error occurred. Please try again.",
+      };
+    }
+  };
+
   const logout = async (navigateFn) => {
     try {
       const data = await logoutApi(); // Call the logout API
@@ -194,6 +232,8 @@ const AuthProvider = ({ children }) => {
         resetPassword,
         resetPasswordWithToken,
         updateUser,
+        requestEditEmail,
+        confirmEmailChange,
         logout,
         loading,
       }}

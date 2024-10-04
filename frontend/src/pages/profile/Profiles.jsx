@@ -14,7 +14,10 @@ const Profile = () => {
       <DashboardLayout>
         <div className="flex justify-between items-center mb-3">
           <h1 className="text-3xl">Profile</h1>
-          <Link to="/edit-profile" className="cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90 flex items-center justify-center">
+          <Link
+            to="/edit-profile"
+            className="cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90 flex items-center justify-center"
+          >
             Edit Profile
           </Link>
         </div>
@@ -28,7 +31,17 @@ const Profile = () => {
 
             <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
               <dt className="font-medium text-gray-900">Email</dt>
-              <dd className="text-gray-700 sm:col-span-2">{user.email}</dd>
+              <dd className="text-gray-700 sm:col-span-2">
+                <div className="flex justify-between items-center">
+                  {user.email}
+                  <Link
+                    to="/edit-email"
+                    className="cursor-pointer rounded-md border border-blue-300 bg-blue-300 px-3 py-1 font-bold text-gray-800 transition hover:bg-opacity-90 flex items-center justify-center"
+                  >
+                    Edit Email
+                  </Link>
+                </div>
+              </dd>
             </div>
 
             <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">

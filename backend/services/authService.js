@@ -351,6 +351,8 @@ export const confirmEmailChangeService = async (token) => {
 
   // Send success email notification
   await sendEmailChangeSuccessEmail(user.email);
+
+  return user;
 };
 
 // Request Email Change Service
@@ -386,6 +388,8 @@ export const requestEmailChangeService = async (userId, newEmail) => {
 
   // Optionally, notify old email
   await sendEmailChangeNotificationEmail(user.email, newEmail);
+
+  return user;
 };
 
 // todo : To test

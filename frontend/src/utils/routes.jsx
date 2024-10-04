@@ -10,6 +10,8 @@ import ConfirmEmail from "../pages/auth/ConfirmEmail";
 import ForgetPassword from "../pages/auth/ForgetPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
 import EditProfile from "../pages/profile/EditProfile";
+import EditEmail from "../pages/profile/EditEmail";
+import ConfirmationEmailChange from "../pages/profile/ConfirmationEmailChange";
 
 // Array for public routes
 export const publicRoutes = [
@@ -81,6 +83,22 @@ export const privateRoutes = [
     element: (
       <PrivateRoute>
         <EditProfile />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/edit-email",
+    element: (
+      <PrivateRoute>
+        <EditEmail />
+      </PrivateRoute>
+    ),
+  },
+  {
+    path: "/confirm-email-change/:token",
+    element: (
+      <PrivateRoute>
+        <ConfirmationEmailChange />
       </PrivateRoute>
     ),
   },

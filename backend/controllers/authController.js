@@ -206,10 +206,11 @@ export const checkEmailAvailability = async (req, res, next) => {
 export const confirmEmailChange = async (req, res, next) => {
   try {
     const { token } = req.body;
-    await confirmEmailChangeService(token);
+    const user = await confirmEmailChangeService(token);
     res.status(200).json({
       success: true,
       message: "Email change confirmed successfully",
+      user
     });
   } catch (error) {
     next(error);
@@ -220,11 +221,11 @@ export const confirmEmailChange = async (req, res, next) => {
 export const requestEmailChange = async (req, res, next) => {
   try {
     const { newEmail } = req.body;
-    await requestEmailChangeService(req.userId, newEmail);
+    const user = await requestEmailChangeService(req.userId, newEmail);
     res.status(200).json({
       success: true,
-      message:
-        "Email change request sent. Please check your new email to confirm.",
+      message: "Email change request sent. Please check your new email to confirm.",
+      user
     });
   } catch (error) {
     next(error);

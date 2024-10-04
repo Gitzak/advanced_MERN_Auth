@@ -106,7 +106,9 @@ export default function Sidebar() {
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`p-2 ${isOpen ? "ml-5" : "ml-0"} rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+          className={`p-2 ${
+            isOpen ? "ml-5" : "ml-0"
+          } rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400`}
         >
           {isOpen ? (
             <ChevronLeft className="w-6 h-6" />
@@ -161,7 +163,9 @@ export default function Sidebar() {
             />
             <div>
               <p className="font-medium">{user.name}</p>
-              <p className="text-sm text-blue-300">{user.email}</p>
+              <p className="text-sm text-blue-300">
+                {user.pendingEmailChange ? user.pendingEmailChange : user.email}
+              </p>
             </div>
           </div>
         </div>

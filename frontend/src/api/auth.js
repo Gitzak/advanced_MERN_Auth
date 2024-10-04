@@ -112,6 +112,39 @@ export const updateUserApi = async (name) => {
   }
 };
 
+export const requestEmailChangeApi = async (newEmail) => {
+  try {
+    const response = await axiosInstance.post("/auth/request-email-change", {
+      newEmail,
+    });
+
+    // Handle success or error responses
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    } else {
+      throw new Error("Network error. Please try again later.");
+    }
+  }
+};
+
+// API call to confirm email change with token in the body
+export const confirmEmailChangeApi = async (token) => {
+  try {
+    const response = await axiosInstance.post(`/auth/confirm-email-change`, {
+      token,
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return error.response.data;
+    } else {
+      throw new Error("Network error. Please try again later.");
+    }
+  }
+};
+
 // API call to check authentication
 export const checkAuthApi = async () => {
   const refreshTokenExpiry = localStorage.getItem("refreshTokenExpiry");

@@ -23,7 +23,7 @@ const EditProfile = () => {
     try {
       // Call the updateUser function (you can implement this in AuthContext)
       updateUser(values.name);
-      navigate("/profile"); // Redirect to profile page after update
+      // navigate("/profile"); // Redirect to profile page after update
     } catch (error) {
       toast.error("An error occurred, please try again.");
     } finally {
