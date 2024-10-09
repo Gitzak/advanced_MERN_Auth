@@ -9,7 +9,7 @@ const TOKEN = process.env.MAILTRAP_TOKEN;
 export const transporter = Nodemailer.createTransport(
   MailtrapTransport({
     token: TOKEN,
-    testInboxId: 3131333,
+    testInboxId: process.env.MAILTRAP_ACCOUNT_ID,
   })
 );
 
