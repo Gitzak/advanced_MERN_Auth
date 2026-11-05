@@ -13,3 +13,7 @@ export const AccountSettings = lazy(() => import("./profile/AccountSettings"));
 export const ConfirmationEmailChange = lazy(
   () => import("./profile/ConfirmationEmailChange"),
 );
+
+export const Documentation = lazy(
+  () => import("./documentation/Documentation"),
+);

@@ -4,7 +4,7 @@ Application React/Express : inscription, confirmation email, sessions JWT révoc
 
 ## Démarrage local
 
-Node.js **22.12 ou supérieur** est requis. Deux terminaux :
+Node.js **22.22.2+ (branche 22), 24.15+ (branche 24) ou 26+** est requis. Deux terminaux :
 
 ```powershell
 cd backend
@@ -71,3 +71,10 @@ Les deux lockfiles sont versionnables et les installations suivantes doivent uti
 Les limites de débit utilisent la mémoire du processus. Pour plusieurs instances de production, choisir un stockage partagé et configurer précisément le proxy de confiance. Ce dépôt n'inclut ni déploiement, ni monitoring externe, ni 2FA. Des comptes existants antérieurs à cette migration devront se reconnecter ; leurs anciens liens de vérification/reset devront être renouvelés, car les nouveaux tokens sont hachés.
 
 Le rapport initial est conservé dans `security_best_practices_report.md`. L'état des corrections et les résultats de validation sont dans `UPGRADE_NOTES.md`.
+
+
+## Documentation int?gr?e
+
+Apr?s connexion, ouvrir **Documentation** en bas du sidebar ou `/documentation`. Dix guides couvrent le d?marrage, la configuration, les sessions, les routes, l?API, l?architecture, SMTP, les tests et le d?pannage. Le moteur utilise React Markdown, GFM et Highlight.js, avec recherche locale, liens de section, copie du code et t?l?chargement Markdown.
+
+Les sources modifiables sont dans `frontend/src/pages/documentation/content/`, et leur index dans `guides.js`. Aucun secret local n?est import? par la page. Les exemples utilisent uniquement des placeholders.

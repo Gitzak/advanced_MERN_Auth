@@ -11,6 +11,7 @@ import {
   EditEmail,
   AccountSettings,
   ConfirmationEmailChange,
+  Documentation,
 } from "../pages/LazyPages";
 import { Link } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
@@ -60,6 +61,14 @@ export const publicRoutes = [
   },
 ];
 export const privateRoutes = [
+  {
+    path: "/documentation/:slug?",
+    element: (
+      <PrivateRoute>
+        <Documentation />
+      </PrivateRoute>
+    ),
+  },
   {
     path: "/dashboard",
     element: (

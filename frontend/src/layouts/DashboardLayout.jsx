@@ -4,15 +4,17 @@ import Header from "../components/header/Header";
 import Alert from "../components/alert/Alert";
 import AuthContext from "../context/AuthContext";
 
-const DashboardLayout = ({ children }) => {
+const DashboardLayout = ({ children, flush = false }) => {
   const { user } = useContext(AuthContext);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       <Sidebar />
       <div className="min-w-0 flex-1 flex flex-col">
         <Header />
-        <main className="flex-1 p-3 md:p-6 mt-1 bg-gray-50 w-full">
+        <main
+          className={`flex-1 w-full ${flush ? "bg-white" : "p-3 md:p-6 mt-1 bg-gray-50"}`}
+        >
           {user?.pendingEmailChange && (
             <Alert
               type="warning"

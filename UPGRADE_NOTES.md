@@ -24,3 +24,8 @@ Le rapport de revue initial est historique : ses références de lignes et ses a
 - Des messages de vérification ont été acceptés par le serveur Mailtrap SMTP ; le worker les a marqués envoyés et a effacé leur contenu stocké. L'ouverture de la boîte via l'interface Mailtrap n'a pas été vérifiée.
 
 Les captures de travail restent sous `output/playwright/`, ignoré par Git. Aucun commit ni push n'a été effectué.
+
+
+## Documentation int?gr?e ? 5 novembre 2026
+
+Ajout d?une page priv?e `/documentation/:slug?` et de son entr?e en bas de navigation. Dix guides Markdown d?crivent le code actuel : d?marrage, configuration, authentification, API, routes, architecture, email, tests et d?pannage. Recherche au clavier, sommaire, coloration syntaxique, copie et t?l?chargement `.md`, avec disposition adapt?e au mobile. Sept tests d?di?s v?rifient la navigation, la recherche, les ancres, le rendu, le t?l?chargement et la gestion du presse-papiers.
