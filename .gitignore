@@ -1,0 +1,6 @@
+/output/
+/.playwright-cli/
+/frontend/audit-*.json
+/frontend/lint-results.json
+**/.env.local
+**/coverage/

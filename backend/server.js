@@ -1,15 +1,28 @@
-import dotenv from "dotenv";
+﻿import mongoose from "mongoose";
 import app from "./app.js";
+import { env } from "./config/env.js";
 import { connectDB } from "./db/connectDB.js";
-
-dotenv.config();
-
-// Connect to the database
-connectDB();
-
-// Start the server
-const PORT = process.env.PORT || 7500;
-
-app.listen(PORT, () => {
-  console.log('\x1b[33m🔥 Server is running on port:', PORT, '\x1b[0m');
-});
+import { startEmailWorker } from "./utils/emailService.js";
+try {
+  await connectDB();
+  const stopWorker = startEmailWorker();
+  const server = app.listen(env.PORT, () =>
+    console.log("API ready at http://localhost:" + env.PORT),
+  );
+  async function shutdown() {
+    stopWorker();
+    server.close(async () => {
+      await mongoose.disconnect();
+      process.exit(0);
+    });
+  }
+  process.once("SIGINT", shutdown);
+  process.once("SIGTERM", shutdown);
+} catch (error) {
+  console.error(
+    "Startup failed:",
+    error.name,
+    "Check database access and backend/.env",
+  );
+  process.exitCode = 1;
+}

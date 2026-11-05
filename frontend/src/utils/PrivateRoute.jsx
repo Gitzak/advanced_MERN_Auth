@@ -10,7 +10,7 @@ const PrivateRoute = ({ children }) => {
     return <Loader />;
   }
 
-  return user ? children : <Navigate to="/login" replace />;
+  return user?.isVerified ? children : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;

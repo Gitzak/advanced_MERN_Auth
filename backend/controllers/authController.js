@@ -1,233 +1,100 @@
-import {
-  signupService,
-  verifyEmailService,
-  loginService,
-  logoutService,
-  forgotPasswordService,
-  resetPasswordService,
-  checkAuthService,
-  resendVerificationEmailService,
-  changePasswordService,
-  updateProfileService,
-  deleteAccountService,
-  refreshAuthTokenService,
-  getUserProfileService,
-  checkEmailAvailabilityService,
-  confirmEmailChangeService,
-  requestEmailChangeService,
-} from "../services/authService.js";
-import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
-
-export const login = async (req, res, next) => {
+﻿import * as service from "../services/authService.js";
+const handler = (fn) => async (req, res, next) => {
   try {
-    const response = await loginService(req.body.email, req.body.password, res);
-    res.status(200).json({
+    await fn(req, res);
+  } catch (error) {
+    next(error);
+  }
+};
+const ok = (res, message, extra = {}) =>
+  res.json({ success: true, message, ...extra });
+export const signup = handler(async (req, res) =>
+  res
+    .status(201)
+    .json({
       success: true,
-      message: "Logged in successfully",
-      user: response.user,
-      refreshTokenExpiryDate: response.refreshTokenExpiryDate
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const signup = async (req, res, next) => {
-  try {
-    const user = await signupService(req.body, res);
-    res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const verifyEmail = async (req, res, next) => {
-  try {
-    const user = await verifyEmailService(req.body.code);
-    res.status(200).json({
-      success: true,
-      message: "Email verified successfully",
-      user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const logout = (req, res, next) => {
-  try {
-    logoutService(res);
-    res.status(200).json({ success: true, message: "Logged out successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const forgotPassword = async (req, res, next) => {
-  try {
-    await forgotPasswordService(req.body.email);
-    res.status(200).json({
-      success: true,
-      message: "Password reset link sent to your email",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const resetPassword = async (req, res, next) => {
-  try {
-    await resetPasswordService(req.params.token, req.body.password);
-    res.status(200).json({
-      success: true,
-      message: "Password reset successful",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const checkAuth = async (req, res, next) => {
-  try {
-    const user = await checkAuthService(req.userId);
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Resend Verification Email
-export const resendVerificationEmail = async (req, res, next) => {
-  try {
-    await resendVerificationEmailService(req.userId);
-    res.status(200).json({
-      success: true,
-      message: "Verification email resent successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Change Password
-export const changePassword = async (req, res, next) => {
-  try {
-    const { oldPassword, newPassword } = req.body;
-    await changePasswordService(req.userId, oldPassword, newPassword);
-    res.status(200).json({
-      success: true,
-      message: "Password changed successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Update Profile
-export const updateProfile = async (req, res, next) => {
-  try {
-    const user = await updateProfileService(req.userId, req.body);
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Delete Account
-export const deleteAccount = async (req, res, next) => {
-  try {
-    await deleteAccountService(req.userId);
-    res.clearCookie("token");
-    res.clearCookie("refreshToken");
-    res.status(200).json({
-      success: true,
-      message: "Account deleted successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Refresh Auth Token
-export const refreshAuthToken = async (req, res, next) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-
-    const userId = await refreshAuthTokenService(refreshToken);
-
-    // Generate a new access token and set it in the cookie
-    generateTokenAndSetCookie(res, userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Token refreshed successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Get User Profile
-export const getUserProfile = async (req, res, next) => {
-  try {
-    const user = await getUserProfileService(req.userId);
-    res.status(200).json({
-      success: true,
-      user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Check Email Availability
-export const checkEmailAvailability = async (req, res, next) => {
-  try {
-    const { email } = req.query;
-    const isAvailable = await checkEmailAvailabilityService(email);
-    res.status(200).json({
-      success: true,
-      isAvailable,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Confirm Email Change
-export const confirmEmailChange = async (req, res, next) => {
-  try {
-    const { token } = req.body;
-    const user = await confirmEmailChangeService(token);
-    res.status(200).json({
-      success: true,
-      message: "Email change confirmed successfully",
-      user
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Request Email Change
-export const requestEmailChange = async (req, res, next) => {
-  try {
-    const { newEmail } = req.body;
-    const user = await requestEmailChangeService(req.userId, newEmail);
-    res.status(200).json({
-      success: true,
-      message: "Email change request sent. Please check your new email to confirm.",
-      user
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+      message: "Account created. Check your email or request a new code",
+      user: await service.signupService(req.body),
+    }),
+);
+export const verifyEmail = handler(async (req, res) =>
+  ok(
+    res,
+    "Email verified",
+    await service.verifyEmailService(req.body.email, req.body.code, res),
+  ),
+);
+export const login = handler(async (req, res) =>
+  ok(
+    res,
+    "Signed in",
+    await service.loginService(req.body.email, req.body.password, res),
+  ),
+);
+export const logout = handler(async (req, res) => {
+  await service.logoutService(req, res);
+  ok(res, "Signed out");
+});
+export const forgotPassword = handler(async (req, res) => {
+  await service.forgotPasswordService(req.body.email);
+  ok(res, "If an account exists, a reset email will be sent shortly");
+});
+export const resetPassword = handler(async (req, res) => {
+  await service.resetPasswordService(req.params.token, req.body.password, res);
+  ok(res, "Password reset. Please sign in again");
+});
+export const checkAuth = handler(async (req, res) =>
+  ok(res, "Authenticated", {
+    user: await service.checkAuthService(req.userId),
+  }),
+);
+export const resendVerificationEmail = handler(async (req, res) => {
+  await service.resendVerificationEmailService(req.body.email);
+  ok(res, "If verification is needed, a new code will be sent shortly");
+});
+export const changePassword = handler(async (req, res) => {
+  await service.changePasswordService(
+    req.userId,
+    req.body.oldPassword,
+    req.body.newPassword,
+    res,
+  );
+  ok(res, "Password changed. Please sign in again");
+});
+export const updateProfile = handler(async (req, res) =>
+  ok(res, "Profile updated", {
+    user: await service.updateProfileService(req.userId, req.body),
+  }),
+);
+export const deleteAccount = handler(async (req, res) => {
+  await service.deleteAccountService(req.userId, req.body.password, res);
+  ok(res, "Account deleted");
+});
+export const refreshAuthToken = handler(async (req, res) =>
+  ok(
+    res,
+    "Session renewed",
+    await service.refreshAuthTokenService(req.cookies.refreshToken, res),
+  ),
+);
+export const getUserProfile = checkAuth;
+export const checkEmailAvailability = handler(async (req, res) =>
+  ok(res, "Email availability", {
+    isAvailable: await service.checkEmailAvailabilityService(
+      req.validatedQuery.email,
+    ),
+  }),
+);
+export const confirmEmailChange = handler(async (req, res) => {
+  await service.confirmEmailChangeService(req.body.token, res);
+  ok(res, "Email updated. Please sign in again");
+});
+export const requestEmailChange = handler(async (req, res) =>
+  ok(res, "Confirmation email queued. Please check your new inbox shortly", {
+    user: await service.requestEmailChangeService(
+      req.userId,
+      req.body.newEmail,
+      req.body.password,
+    ),
+  }),
+);

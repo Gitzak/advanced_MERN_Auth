@@ -1,4 +1,4 @@
-import { sendEmail } from "./emailService.js";
+import { sendEmail, escapeHtml } from "./emailService.js";
 import {
   EMAIL_CHANGE_CONFIRMATION_TEMPLATE,
   EMAIL_CHANGE_NOTIFICATION_TEMPLATE,
@@ -23,7 +23,7 @@ export const sendVerificationEmail = async (email, verificationToken) => {
 
 // Send Welcome Email
 export const sendWelcomeEmail = async (email, name) => {
-  const htmlContent = WELCOME_EMAIL_TEMPLATE(name);
+  const htmlContent = WELCOME_EMAIL_TEMPLATE(escapeHtml(name));
 
   await sendEmail({
     to: email,
@@ -36,7 +36,7 @@ export const sendWelcomeEmail = async (email, name) => {
 export const sendPasswordResetEmail = async (email, resetURL) => {
   const htmlContent = PASSWORD_RESET_REQUEST_TEMPLATE.replace(
     "{resetURL}",
-    resetURL
+    resetURL,
   );
 
   await sendEmail({
@@ -63,7 +63,7 @@ export const sendEmailChangeConfirmationEmail = async (email, token) => {
 
   const htmlContent = EMAIL_CHANGE_CONFIRMATION_TEMPLATE.replace(
     "{confirmationLink}",
-    confirmationLink
+    confirmationLink,
   );
 
   await sendEmail({
@@ -77,7 +77,7 @@ export const sendEmailChangeConfirmationEmail = async (email, token) => {
 export const sendEmailChangeNotificationEmail = async (oldEmail, newEmail) => {
   const htmlContent = EMAIL_CHANGE_NOTIFICATION_TEMPLATE.replace(
     "{newEmail}",
-    newEmail
+    newEmail,
   );
 
   await sendEmail({

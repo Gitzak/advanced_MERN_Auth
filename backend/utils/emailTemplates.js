@@ -259,4 +259,3 @@ export const EMAIL_CHANGE_SUCCESS_TEMPLATE = `
 </body>
 </html>
 `;
-

@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { useContext, useState } from "react";
 import AuthContext from "../../context/AuthContext";
@@ -6,11 +5,10 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import InputBox from "../../components/inputBox/InputBox";
 import { toast } from "react-toastify";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const EditProfile = () => {
   const { user, updateUser } = useContext(AuthContext); // Assuming `updateUser` is available in AuthContext
-  const navigate = useNavigate();
   const [isSubmitting, setSubmitting] = useState(false);
 
   // Yup validation schema
@@ -22,9 +20,9 @@ const EditProfile = () => {
     setSubmitting(true);
     try {
       // Call the updateUser function (you can implement this in AuthContext)
-      updateUser(values.name);
+      await updateUser(values.name);
       // navigate("/profile"); // Redirect to profile page after update
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred, please try again.");
     } finally {
       setSubmitting(false);
@@ -33,9 +31,8 @@ const EditProfile = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Edit Profile - MERN APP</title>
-      </Helmet>
+      <title>Edit Profile - MERN APP</title>
+
       <DashboardLayout>
         <div className="flex justify-between items-center mb-3">
           <h1 className="text-3xl">Edit Profile</h1>

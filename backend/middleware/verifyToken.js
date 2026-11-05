@@ -1,56 +1,48 @@
-import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js';
-
+﻿import mongoose from "mongoose";
+import { verifyJwt } from "../utils/generateTokenAndSetCookie.js";
+import { findUserById } from "../repositories/userRepository.js";
+import { Session } from "../models/Session.js";
 export const verifyToken = async (req, res, next) => {
+  let decoded;
   try {
-    const token = req.cookies?.token;
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized - no token provided',
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded || !decoded.userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized - invalid token',
-      });
-    }
-
-    const user = await User.findById(decoded.userId);
-
-    if (!user || user.isDeleted) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized - user not found or deleted',
-      });
-    }
-
-    req.userId = decoded.userId;
+    decoded = verifyJwt(req.cookies?.token);
+    if (
+      !mongoose.isObjectIdOrHexString(decoded.sub) ||
+      !mongoose.isObjectIdOrHexString(decoded.sid)
+    )
+      throw Error("claims");
+  } catch {
+    return res
+      .status(401)
+      .json({ success: false, message: "Please sign in again" });
+  }
+  try {
+    const [user, session] = await Promise.all([
+      findUserById(decoded.sub),
+      Session.findOne({
+        _id: decoded.sid,
+        userId: decoded.sub,
+        expiresAt: { $gt: new Date() },
+      }),
+    ]);
+    if (
+      !user?.isVerified ||
+      !session ||
+      decoded.version !== user.sessionVersion ||
+      session.version !== user.sessionVersion
+    )
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: "Session expired. Please sign in again",
+        });
+    req.userId = String(user._id);
+    req.user = user;
+    req.sessionId = String(session._id);
     req.role = user.role;
-
     next();
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized - token expired',
-      });
-    } else if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized - invalid token signature',
-      });
-    }
-
-    console.error('Error in verifyToken:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error while verifying token',
-    });
+    next(error);
   }
 };

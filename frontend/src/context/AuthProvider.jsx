@@ -1,246 +1,205 @@
-import { useState, useEffect } from "react";
-import AuthContext from "./AuthContext";
-import { toast } from "react-toastify";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  checkAuthApi,
-  confirmEmailChangeApi,
-  confirmEmailCodeApi,
-  loginApi,
-  logoutApi,
-  registerApi,
-  requestEmailChangeApi,
-  resetPasswordApi,
-  sendResetPasswordLinkApi,
-  updateUserApi,
-} from "../api/auth";
+import { toast } from "react-toastify";
+import AuthContext from "./AuthContext";
+import * as api from "../api/auth";
 
-const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // User data
-  const [loading, setLoading] = useState(true); // Loading state
-  const navigate = useNavigate(); // Keep navigate for internal use if needed
-
+export default function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   useEffect(() => {
-    const verifyAuth = async () => {
-      try {
-        const refreshTokenExpiry = localStorage.getItem("refreshTokenExpiry");
-
-        // Check if the refresh token expiration date exists and is still valid
-        if (!refreshTokenExpiry || new Date(refreshTokenExpiry) < new Date()) {
-          setUser(null);
-          localStorage.clear();
-
-          // Check if the current route is a public route (e.g., /login, /register)
-          const publicPaths = getAllPublicPaths();
-          if (!publicPaths.includes(location.pathname)) {
-            navigate("/login"); // Redirect to login if the session has expired and not on a public route
-          }
-          return;
-        }
-
-        const data = await checkAuthApi();
-        if (data.success) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        if (error.message === "Failed to refresh token.") {
-          setUser(null); // Clear user data if refresh fails
-          navigate("/login"); // Redirect to login if unable to refresh
-          toast.error("Session expired, please log in again.");
-        } else {
-          setUser(null);
-        }
-      } finally {
-        setLoading(false);
-      }
+    let active = true;
+    const expired = () => {
+      if (active) setUser(null);
     };
-
-    verifyAuth();
-  }, [navigate]);
-
-  const login = async (userData, navigateFn) => {
+    window.addEventListener("auth-expired", expired);
+    api
+      .checkAuthApi()
+      .then((data) => {
+        if (active) setUser(data.user);
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+      window.removeEventListener("auth-expired", expired);
+    };
+  }, []);
+  const run = useCallback(async (action) => {
     try {
-      const data = await loginApi(userData.email, userData.password);
-
-      if (data.success) {
-        setUser(data.user); // Set authenticated user
-        navigateFn("/dashboard"); // Navigate to dashboard using passed navigate function
-        toast.success("Logged in successfully!");
-      } else {
-        toast.error(data.message || "Login failed");
-      }
+      return await action();
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Login failed. Please try again.");
+      const message =
+        error.response?.data?.message ||
+        (error.request
+          ? "Cannot reach the server. Please try again."
+          : "Something went wrong. Please try again.");
+      toast.error(message);
+      return { success: false, message, code: error.response?.data?.code };
     }
-  };
-
-  // Register function
-  const register = async (userData, navigateFn) => {
-    try {
-      const data = await registerApi(
-        userData.name,
-        userData.email,
-        userData.password
-      );
-
-      if (data.success) {
-        navigateFn("/confirm-email");
-        toast.success(
-          "Registered successfully! Please check your email for the confirmation code."
+  }, []);
+  const login = useCallback(
+    async (values) => {
+      const result = await run(async () => {
+        const data = await api.loginApi(values.email, values.password);
+        setUser(data.user);
+        navigate("/dashboard");
+        toast.success("Signed in");
+        return data;
+      });
+      if (result.code === "VERIFICATION_REQUIRED") {
+        sessionStorage.setItem("verificationEmail", values.email);
+        navigate("/confirm-email");
+      }
+      return result;
+    },
+    [run, navigate],
+  );
+  const register = useCallback(
+    (values) =>
+      run(async () => {
+        const data = await api.registerApi(
+          values.name,
+          values.email,
+          values.password,
         );
-      } else {
-        toast.error(data.message || "Registration failed.");
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast.error("An error occurred during registration. Please try again.");
-    }
-  };
-
-  // Confirm email function
-  const confirmEmail = async (code, navigateFn) => {
-    try {
-      const data = await confirmEmailCodeApi(code); // Call the API to confirm the email
-
-      if (data.success) {
-        toast.success("Email verified successfully!");
-        navigateFn("/dashboard"); // Navigate to the dashboard after successful confirmation
-      } else {
-        toast.error(data.message || "Invalid code, please try again.");
-      }
-    } catch (error) {
-      console.error("Email confirmation error:", error);
-      toast.error(
-        "An error occurred during email confirmation. Please try again."
-      );
-    }
-  };
-
-  // Call the API to confirm the reset code
-  const resetPassword = async (email, navigateFn) => {
-    try {
-      const data = await sendResetPasswordLinkApi(email);
-
-      if (data.success) {
+        sessionStorage.setItem("verificationEmail", values.email);
+        navigate("/confirm-email");
         toast.success(data.message);
-      } else {
-        toast.error(data.message || "Invalid email, please try again.");
-      }
-    } catch (error) {
-      console.error("Reset password confirmation error:", error);
-      toast.error("An error occurred, please try again.");
-    }
-  };
-
-  const resetPasswordWithToken = async (token, newPassword, navigateFn) => {
-    try {
-      const data = await resetPasswordApi(token, newPassword); // Call the API to reset password
-
-      if (data.success) {
+        return data;
+      }),
+    [run, navigate],
+  );
+  const confirmEmail = useCallback(
+    (email, code) =>
+      run(async () => {
+        const data = await api.confirmEmailCodeApi(email, code);
+        setUser(data.user);
+        sessionStorage.removeItem("verificationEmail");
+        navigate("/dashboard");
         toast.success(data.message);
-        navigateFn("/login"); // Redirect to login after successful password reset
-      } else {
-        toast.error(data.message || "Password reset failed, please try again.");
-      }
-    } catch (error) {
-      console.error("Password reset error:", error);
-      toast.error("An error occurred, please try again.");
-    }
-  };
-
-  const updateUser = async (name) => {
-    try {
-      const data = await updateUserApi(name); // Call the API function
-
-      if (data.success) {
-        // Update user in context
-        setUser({ ...user, name: data.user.name });
-        toast.success("Profile updated successfully!");
-      } else {
-        throw new Error(data.message || "Failed to update profile.");
-      }
-    } catch (error) {
-      console.error("Profile update error:", error);
-      toast.error(error.message || "An error occurred. Please try again.");
-    }
-  };
-
-  const requestEditEmail = async (email) => {
-    try {
-      const data = await requestEmailChangeApi(email); // Call the API function
-      if (data.success) {
-        setUser({ ...user, pendingEmailChange: data.user.pendingEmailChange });
+        return data;
+      }),
+    [run, navigate],
+  );
+  const resendVerification = useCallback(
+    (email) =>
+      run(async () => {
+        const data = await api.resendVerificationApi(email);
+        toast.info(data.message);
+        return data;
+      }),
+    [run],
+  );
+  const resetPassword = useCallback(
+    (email) =>
+      run(async () => {
+        const data = await api.sendResetPasswordLinkApi(email);
+        toast.info(data.message);
+        return data;
+      }),
+    [run],
+  );
+  const resetPasswordWithToken = useCallback(
+    (token, password) =>
+      run(async () => {
+        const data = await api.resetPasswordApi(token, password);
+        setUser(null);
+        navigate("/login");
         toast.success(data.message);
-      } else {
-        throw new Error(data.message || "Failed to update profile.");
-      }
-    } catch (error) {
-      console.error("Profile update error:", error);
-      toast.error(error.message || "An error occurred. Please try again.");
-    }
-  };
-
-  const confirmEmailChange = async (token) => {
-    try {
-      const data = await confirmEmailChangeApi(token);
-
-      if (data.success) {
-        setUser((prevUser) => ({ ...prevUser, email: data.user.email }));
-        return { success: true, message: data.message };
-      } else {
-        return {
-          success: false,
-          message: data.message || "Token is invalid or expired.",
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message || "An error occurred. Please try again.",
-      };
-    }
-  };
-
-  const logout = async (navigateFn) => {
-    try {
-      const data = await logoutApi(); // Call the logout API
-
-      if (data.success) {
-        setUser(null); // Clear user state
-        localStorage.clear();
-        navigateFn("/login"); // Navigate to the login page using passed navigate function
-        toast.info("Logged out successfully!");
-      } else {
-        toast.error(data.message || "Logout failed");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Failed to logout. Please try again.");
-    }
-  };
-
+        return data;
+      }),
+    [run, navigate],
+  );
+  const updateUser = useCallback(
+    (name) =>
+      run(async () => {
+        const data = await api.updateUserApi(name);
+        setUser(data.user);
+        toast.success(data.message);
+        return data;
+      }),
+    [run],
+  );
+  const requestEditEmail = useCallback(
+    (email, password) =>
+      run(async () => {
+        const data = await api.requestEmailChangeApi(email, password);
+        setUser(data.user);
+        toast.info(data.message);
+        return data;
+      }),
+    [run],
+  );
+  const confirmEmailChange = useCallback(
+    (token) =>
+      run(async () => {
+        const data = await api.confirmEmailChangeApi(token);
+        setUser(null);
+        toast.success(data.message);
+        navigate("/login");
+        return data;
+      }),
+    [run, navigate],
+  );
+  const logout = useCallback(
+    () =>
+      run(async () => {
+        const data = await api.logoutApi();
+        setUser(null);
+        localStorage.removeItem("refreshTokenExpiry");
+        navigate("/login");
+        return data;
+      }),
+    [run, navigate],
+  );
+  const changePassword = useCallback(
+    (oldPassword, newPassword) =>
+      run(async () => {
+        const data = await api.changePasswordApi(oldPassword, newPassword);
+        setUser(null);
+        navigate("/login");
+        toast.success(data.message);
+        return data;
+      }),
+    [run, navigate],
+  );
+  const deleteAccount = useCallback(
+    (password) =>
+      run(async () => {
+        const data = await api.deleteAccountApi(password);
+        setUser(null);
+        navigate("/login");
+        toast.success(data.message);
+        return data;
+      }),
+    [run, navigate],
+  );
   return (
     <AuthContext.Provider
       value={{
         user,
+        loading,
         login,
         register,
         confirmEmail,
+        resendVerification,
         resetPassword,
         resetPasswordWithToken,
         updateUser,
         requestEditEmail,
         confirmEmailChange,
         logout,
-        loading,
+        changePassword,
+        deleteAccount,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
-
-export default AuthProvider;
+}

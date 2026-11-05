@@ -1,49 +1,59 @@
-import jwt from "jsonwebtoken";
-import { ApiError } from "./errors.js";
-
-export const generateTokenAndSetCookie = (res, userId) => {
-  try {
-    const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN || "15m",
-    });
-
-    res.cookie("token", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-
-    return accessToken;
-  } catch (error) {
-    console.error("Error generating access token and setting cookie:", error);
-    throw new ApiError("Failed to authenticate user", 500);
-  }
+﻿import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
+export const cookieOptions = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: "strict",
+  path: "/",
 };
-
-export const generateRefreshTokenAndSetCookie = (res, userId) => {
-  try {
-    const refreshToken = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
-    });
-
-    const refreshTokenExpiryDate = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000
-    ); // 7 days
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
-    return {
-      refreshToken,
-      refreshTokenExpiryDate, // Return the expiration date
-    };
-  } catch (error) {
-    console.error("Error generating refresh token and setting cookie:", error);
-    throw new ApiError("Failed to generate refresh token", 500);
-  }
-};
+export function clearAuthCookies(res) {
+  res.clearCookie("token", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
+}
+export function signAccessToken(user, session) {
+  return jwt.sign(
+    { sid: String(session._id), version: session.version },
+    env.JWT_SECRET,
+    {
+      subject: String(user._id),
+      expiresIn: env.ACCESS_TOKEN_SECONDS,
+      algorithm: "HS256",
+      issuer: "mern-auth",
+      audience: "mern-auth-access",
+    },
+  );
+}
+export function signRefreshToken(user, session, jti) {
+  return jwt.sign(
+    { sid: String(session._id), version: session.version },
+    env.JWT_REFRESH_SECRET,
+    {
+      subject: String(user._id),
+      jwtid: jti,
+      expiresIn: Math.max(
+        1,
+        Math.floor((session.expiresAt.getTime() - Date.now()) / 1000),
+      ),
+      algorithm: "HS256",
+      issuer: "mern-auth",
+      audience: "mern-auth-refresh",
+    },
+  );
+}
+export function setAuthCookies(res, user, session, refreshToken) {
+  res.cookie("token", signAccessToken(user, session), {
+    ...cookieOptions,
+    maxAge: env.ACCESS_TOKEN_SECONDS * 1000,
+  });
+  res.cookie("refreshToken", refreshToken, {
+    ...cookieOptions,
+    maxAge: Math.max(0, session.expiresAt.getTime() - Date.now()),
+  });
+}
+export function verifyJwt(token, refresh = false) {
+  return jwt.verify(token, refresh ? env.JWT_REFRESH_SECRET : env.JWT_SECRET, {
+    algorithms: ["HS256"],
+    issuer: "mern-auth",
+    audience: refresh ? "mern-auth-refresh" : "mern-auth-access",
+  });
+}

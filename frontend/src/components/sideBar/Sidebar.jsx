@@ -1,175 +1,66 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  User,
-} from "lucide-react";
+﻿import BrandLogo from "../BrandLogo";
+import { useContext, useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
+import { LayoutDashboard, LogOut, ChevronLeft, User, Settings } from "lucide-react";
 import AuthContext from "../../context/AuthContext";
-
-const menuItems = [
+const items = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { name: "Profile", icon: User, path: "/profile" },
+  { name: "Account settings", icon: Settings, path: "/settings" },
 ];
-
 export default function Sidebar() {
-  const location = useLocation();
-  const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
-  const [activeItem, setActiveItem] = useState("");
-  const [isOpen, setIsOpen] = useState(true);
-  const sidebarRef = useRef(null); // Reference for detecting clicks outside sidebar
-  const [isMobile, setIsMobile] = useState(false); // Track if the screen size is mobile
-
+  const [open, setOpen] = useState(() => window.innerWidth >= 768);
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
-    const currentPath = location.pathname;
-    const activeMenuItem = menuItems.find((item) => item.path === currentPath);
-    if (activeMenuItem) {
-      setActiveItem(activeMenuItem.name);
-    }
-  }, [location.pathname]);
-
-  // Handle closing sidebar on mobile devices
-  const handleItemClick = (path) => {
-    navigate(path);
-    if (isMobile) {
-      setIsOpen(false); // Close sidebar only on mobile
-    }
-  };
-
-  const handleLogout = () => {
-    logout(navigate);
-    if (isMobile) {
-      setIsOpen(false); // Close sidebar only on mobile
-    }
-  };
-
-  // Detect clicks outside the sidebar and close if on mobile
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target) &&
-        isMobile
-      ) {
-        setIsOpen(false); // Close only on mobile
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isMobile]);
-
-  // Update the isMobile state based on the window size
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768); // Use the `md` breakpoint (768px)
-    };
-    handleResize(); // Initial check
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    const query = window.matchMedia("(max-width: 767px)");
+    const changed = (event) => { setMobile(event.matches); setOpen(!event.matches); };
+    query.addEventListener("change", changed);
+    return () => query.removeEventListener("change", changed);
   }, []);
-
   return (
-    <div
-      ref={sidebarRef}
-      className={`flex flex-col h-screen ${
-        isOpen ? "w-auto" : "w-20"
-      } bg-blue-600 text-white transition-all duration-300`}
-    >
-      <div
-        className={`p-5 flex ${isOpen ? "justify-between" : "justify-center"}`}
-      >
-        {isOpen && (
-          <h1 className="text-xl font-bold flex items-center">
-            <svg
-              className="w-8 h-8 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            App DATA
-          </h1>
-        )}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`p-2 ${
-            isOpen ? "ml-5" : "ml-0"
-          } rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400`}
-        >
-          {isOpen ? (
-            <ChevronLeft className="w-6 h-6" />
-          ) : (
-            <ChevronRight className="w-6 h-6" />
-          )}
-        </button>
-      </div>
-      <nav className="flex-1 overflow-y-auto">
-        <ul>
-          {menuItems.map((item) => (
-            <li key={item.name} className="mb-1">
-              <Link to={item.path}>
-                <button
-                  onClick={() => handleItemClick(item.path)}
-                  className={`flex items-center w-full px-5 py-2 transition-colors duration-200 ${
-                    activeItem === item.name
-                      ? "bg-blue-700"
-                      : "hover:bg-blue-700"
-                  }`}
-                >
-                  <item.icon
-                    className={`w-5 h-5 ${isOpen ? "mr-3" : "mx-auto"}`}
-                  />
-                  {isOpen && item.name}
-                </button>
-              </Link>
+    <div className="app-sidebar-shell shrink-0" data-open={open}>
+      {mobile && <button aria-label="Close navigation" aria-hidden={!open} tabIndex={open ? 0 : -1}
+        className="app-sidebar-backdrop fixed inset-0 z-30 bg-black/30" onClick={() => setOpen(false)} />}
+      <aside aria-label="Main navigation" className="app-sidebar bg-blue-600 text-white flex flex-col h-dvh">
+        <div className="app-sidebar-heading relative shrink-0 h-18">
+          <div className="app-sidebar-brand" aria-hidden={!open}>
+            <BrandLogo className="w-40 h-auto text-white [--brand-mark-ink:#2563eb]" />
+          </div>
+          <button type="button" aria-label={open ? "Collapse navigation" : "Expand navigation"}
+            aria-expanded={open} className="app-sidebar-toggle flex items-center justify-center rounded-lg hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2"
+            onClick={() => setOpen(value => !value)}>
+            <ChevronLeft size={20} aria-hidden="true" />
+          </button>
+        </div>
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2">
+          <ul className="flex flex-col gap-2">{items.map(item => (
+            <li key={item.path}>
+              <NavLink to={item.path} aria-label={item.name} title={item.name}
+                onClick={() => { if (mobile) setOpen(false); }}
+                className={({isActive}) => "app-sidebar-item rounded-lg " + (isActive ? "bg-blue-700" : "hover:bg-blue-700")}>
+                <item.icon className="shrink-0" size={20} aria-hidden="true" />
+                <span className="app-sidebar-label" aria-hidden={!open}>{item.name}</span>
+              </NavLink>
             </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="border-t border-blue-700">
-        <button
-          onClick={handleLogout}
-          className="flex items-center w-full px-5 py-5 transition-colors duration-200 hover:bg-blue-700"
-        >
-          <LogOut className={`w-5 h-5 ${isOpen ? "mr-3" : "mx-auto"}`} />
-          {isOpen && <span>Log out</span>}
-        </button>
-      </div>
-
-      {isOpen && (
-        <div className="p-5 border-t border-blue-700">
-          <div className="flex items-center">
-            <img
-              className="w-10 h-10 rounded-full mr-3"
-              src={`https://ui-avatars.com/api/?name=${user?.name?.slice(
-                0,
-                1
-              )}&background=00CCDD&color=3C3D37&font-size=0.55`}
-              alt="User avatar"
-            />
-            <div>
-              <p className="font-medium">{user.name}</p>
-              <p className="text-sm text-blue-300">
-                {user.pendingEmailChange ? user.pendingEmailChange : user.email}
-              </p>
-            </div>
+          ))}</ul>
+        </nav>
+        <div className="shrink-0 border-t border-blue-500 p-2">
+          <button aria-label="Sign out" title="Sign out" disabled={busy}
+            className="app-sidebar-item w-full rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            onClick={async () => {setBusy(true); try {await logout();} finally {setBusy(false);}}}>
+            <LogOut className="shrink-0" size={20} aria-hidden="true" />
+            <span className="app-sidebar-label" aria-hidden={!open}>{busy ? "Signing out..." : "Sign out"}</span>
+          </button>
+        </div>
+        <div className="app-sidebar-account shrink-0" aria-hidden={!open}>
+          <div className="flex items-center gap-3 px-4 py-3 border-t border-blue-500">
+            <span className="shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-blue-800" aria-hidden="true">{user?.name?.slice(0,1)}</span>
+            <div className="min-w-0"><p className="truncate font-medium">{user?.name}</p><p className="truncate text-sm text-blue-100" title={user?.email}>{user?.email}</p></div>
           </div>
         </div>
-      )}
+      </aside>
     </div>
   );
 }

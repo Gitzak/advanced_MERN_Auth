@@ -1,4 +1,4 @@
-import AccessControl from "accesscontrol";
+﻿import { AccessControl } from "accesscontrol";
 
 const ac = new AccessControl();
 

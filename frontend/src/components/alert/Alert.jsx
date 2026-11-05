@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
+import { useState } from "react";
 import { X } from "lucide-react"; // You can use any icon for the close button
 
 const Alert = ({ type = "danger", title, content }) => {
@@ -88,13 +87,6 @@ const Alert = ({ type = "danger", title, content }) => {
       <p className={`mt-2 text-sm ${currentStyle.text}`}>{content}</p>
     </div>
   );
-};
-
-// Define PropTypes for validation
-Alert.propTypes = {
-  type: PropTypes.oneOf(["danger", "info", "success", "warning", "dark"]),
-  title: PropTypes.string.isRequired,
-  content: PropTypes.string.isRequired,
 };
 
 export default Alert;

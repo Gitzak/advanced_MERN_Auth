@@ -1,88 +1,62 @@
-import { Helmet } from "react-helmet-async";
-import DashboardLayout from "../../layouts/DashboardLayout";
-import { useContext } from "react";
+﻿import { useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../../context/AuthContext";
-import { Link } from "react-router-dom";
-
-const Profile = () => {
+import DashboardLayout from "../../layouts/DashboardLayout";
+const actionClass =
+  "inline-flex min-h-10 items-center justify-center rounded px-4 py-2 text-base font-normal text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2";
+export default function Profile() {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   return (
     <>
-      <Helmet>
-        <title>Profile - MERN APP</title>
-      </Helmet>
+      <title>Profile - MERN APP</title>
       <DashboardLayout>
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
           <h1 className="text-3xl">Profile</h1>
           <Link
             to="/edit-profile"
-            className="cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-white transition hover:bg-opacity-90 flex items-center justify-center"
+            className={`${actionClass} bg-primary hover:bg-blue-700 focus-visible:outline-primary`}
           >
-            Edit Profile
+            Edit profile
           </Link>
         </div>
-
-        <div className="flow-root rounded-lg border border-gray-100 py-3 shadow-sm">
-          <dl className="-my-3 divide-y divide-gray-100 text-sm">
-            <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-              <dt className="font-medium text-gray-900">Name</dt>
-              <dd className="text-gray-700 sm:col-span-2">{user.name}</dd>
+        <dl className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
+          {[
+            ["Name", user.name],
+            ["Email", user.email],
+            ["Role", user.role],
+            ["Email status", user.isVerified ? "Verified" : "Pending"],
+            ["Created", new Date(user.createdAt).toLocaleDateString()],
+            [
+              "Last sign-in",
+              user.lastLogin
+                ? new Date(user.lastLogin).toLocaleString()
+                : "Just registered",
+            ],
+          ].map(([label, value]) => (
+            <div className="grid gap-2 p-4 sm:grid-cols-3" key={label}>
+              <dt className="font-medium">{label}</dt>
+              <dd className="sm:col-span-2 break-words min-w-0">{value}</dd>
             </div>
-
-            <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-              <dt className="font-medium text-gray-900">Email</dt>
-              <dd className="text-gray-700 sm:col-span-2">
-                <div className="flex justify-between items-center">
-                  {user.email}
-                  <Link
-                    to="/edit-email"
-                    className="cursor-pointer rounded-md border border-blue-300 bg-blue-300 px-3 py-1 font-bold text-gray-800 transition hover:bg-opacity-90 flex items-center justify-center"
-                  >
-                    Edit Email
-                  </Link>
-                </div>
-              </dd>
-            </div>
-
-            <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-              <dt className="font-medium text-gray-900">Created at</dt>
-              <dd className="text-gray-700 sm:col-span-2">
-                {new Date(user.createdAt).toLocaleString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                  second: "numeric",
-                  hour12: true,
-                })}
-              </dd>
-            </div>
-
-            <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-              <dt className="font-medium text-gray-900">Occupation</dt>
-              <dd className="text-gray-700 sm:col-span-2">Guitarist</dd>
-            </div>
-
-            <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-              <dt className="font-medium text-gray-900">Salary</dt>
-              <dd className="text-gray-700 sm:col-span-2">$1,000,000+</dd>
-            </div>
-
-            <div className="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-              <dt className="font-medium text-gray-900">Bio</dt>
-              <dd className="text-gray-700 sm:col-span-2">
-                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Et
-                facilis debitis explicabo doloremque impedit nesciunt dolorem
-                facere, dolor quasi veritatis quia fugit aperiam aspernatur
-                neque molestiae labore aliquam soluta architecto?
-              </dd>
-            </div>
-          </dl>
+          ))}
+        </dl>
+        <div className="flex gap-3 mt-4 flex-wrap">
+          <button
+            type="button"
+            onClick={() => navigate("/edit-email")}
+            className={`${actionClass} bg-teal-700 hover:bg-teal-800 focus-visible:outline-teal-700`}
+          >
+            Change email
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/settings")}
+            className={`${actionClass} bg-slate-600 hover:bg-slate-700 focus-visible:outline-slate-600`}
+          >
+            Account settings
+          </button>
         </div>
       </DashboardLayout>
     </>
   );
-};
-
-export default Profile;
+}

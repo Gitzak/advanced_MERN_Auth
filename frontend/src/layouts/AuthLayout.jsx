@@ -1,20 +1,17 @@
-import React from "react";
+import BrandLogo from "../components/BrandLogo";
 import { Link } from "react-router-dom";
 import Circles from "../components/circles/Circles";
 
 const AuthLayout = ({ children }) => {
   return (
-    <section className="bg-blue-50 py-20 dark:bg-dark lg:py-[120px] h-screen flex items-center justify-center">
+    <section className="bg-blue-50 py-8 dark:bg-dark lg:py-12 min-h-screen flex items-center justify-center">
       <div className="container mx-auto">
         <div className="-mx-4 flex flex-wrap">
           <div className="w-full px-4">
-            <div className="relative mx-auto max-w-[525px] overflow-hidden shadow-3 rounded-lg bg-white px-10 py-16 text-center dark:bg-dark-2 sm:px-12 md:px-[60px]">
-              <div className="mb-10 text-center md:mb-16">
-                <Link to="/" className="mx-auto inline-block max-w-[160px]">
-                  <img
-                    src="https://cdn.tailgrids.com/2.0/image/assets/images/logo/logo-primary.svg"
-                    alt="logo"
-                  />
+            <div className="relative mx-auto max-w-[525px] overflow-hidden shadow-3 rounded-lg bg-white px-6 py-8 text-center dark:bg-dark-2 sm:px-12 md:px-[60px]">
+              <div className="mb-6 text-center">
+                <Link to="/" className="mx-auto inline-block w-[210px] max-w-full text-primary dark:text-white" aria-label="Data App home">
+                  <BrandLogo className="block w-full h-auto" />
                 </Link>
               </div>
               {children}
@@ -235,7 +232,7 @@ const AuthLayout = ({ children }) => {
                     />
                   </svg>
                 </span> */}
-                <Circles x="right-1" y="top-1"  />
+                <Circles x="right-1" y="top-1" />
                 <Circles x="bottom-1" y="left-1" />
               </div>
             </div>

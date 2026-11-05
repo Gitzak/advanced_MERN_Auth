@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import { useContext } from "react";
 import Sidebar from "../components/sideBar/Sidebar";
 import Header from "../components/header/Header";
 import Alert from "../components/alert/Alert";
@@ -10,9 +10,9 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="flex h-screen">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="min-w-0 flex-1 flex flex-col">
         <Header />
-        <main className="flex-1 p-6 mt-1 bg-gray-50 w-full">
+        <main className="flex-1 p-3 md:p-6 mt-1 bg-gray-50 w-full">
           {user?.pendingEmailChange && (
             <Alert
               type="warning"

@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -14,7 +13,7 @@ import AuthContext from "../../context/AuthContext";
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string()
-    .min(6, "Password must be at least 6 characters")
+    .min(8, "Password must be at least 8 characters")
     .required("Password is required"),
 });
 
@@ -24,9 +23,8 @@ const Login = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Login - MERN APP</title>
-      </Helmet>
+      <title>Login - MERN APP</title>
+
       <AuthLayout>
         <div className="">
           <Formik
@@ -34,11 +32,11 @@ const Login = () => {
             validationSchema={LoginSchema}
             onSubmit={async (values, { setSubmitting }) => {
               try {
-                login(values, navigate);
-              } catch (error) {
+                await login(values, navigate);
+              } catch (_error) {
                 // Handle any additional errors if needed
                 // toast.error("An error occurred during login.");
-                console.log(error);
+                console.error(_error);
               }
               setSubmitting(false); // Formik's submission handling
             }}

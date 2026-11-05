@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import { useState, useContext } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -24,9 +23,9 @@ const ForgetPassword = () => {
     setSubmitting(true);
     try {
       // Call the resetPassword function from AuthProvider
-      resetPassword(values.email, navigate);
-      resetForm();
-    } catch (error) {
+      const result = await resetPassword(values.email, navigate);
+      if (result.success) resetForm();
+    } catch (_error) {
       toast.error("An error occurred, please try again.");
     } finally {
       setSubmitting(false);
@@ -35,9 +34,8 @@ const ForgetPassword = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Reset Password - MERN APP</title>
-      </Helmet>
+      <title>Reset Password - MERN APP</title>
+
       <AuthLayout>
         <div className="reset-password-container">
           <Formik

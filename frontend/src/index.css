@@ -1,3 +1,126 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+﻿@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@theme {
+  --color-primary: #3758f9;
+  --color-secondary: #13c296;
+  --color-stroke: #dfe4ea;
+  --color-body-color: #637381;
+  --color-secondary-color: #8899a8;
+  --color-dark: #111928;
+  --color-dark-2: #1f2a37;
+  --color-dark-3: #374151;
+  --color-dark-4: #4b5563;
+  --color-dark-5: #6b7280;
+  --color-dark-6: #9ca3af;
+  --color-dark-7: #d1d5db;
+  --color-dark-8: #e5e7eb;
+  --color-gray-1: #f9fafb;
+  --color-gray-2: #f3f4f6;
+  --color-gray-3: #e5e7eb;
+  --color-gray-4: #dee2e6;
+  --shadow-1: 0 1px 3px #a6afc366;
+  --shadow-2: 0 5px 12px #0000001a;
+  --shadow-3: 0 4px 12px #0d0a2c0f;
+  --shadow-4: 0 10px 30px #556aeb1f;
+  --shadow-5: 0 13px 40px #0d0a2c1f;
+  --shadow-6: 0 12px 34px #0d0a2c14;
+}
+@layer base {
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+  }
+}
+.container {
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+.navbarTogglerActive > span:nth-child(1) {
+  transform: rotate(45deg);
+  top: 7px;
+}
+.navbarTogglerActive > span:nth-child(2) {
+  opacity: 0;
+}
+.navbarTogglerActive > span:nth-child(3) {
+  transform: rotate(135deg);
+  top: -8px;
+}
+
+/* Keep the rail and content in sync while labels fade inside the clipped panel. */
+.app-sidebar-shell {
+  --sidebar-width: 56px;
+  --sidebar-open-width: 224px;
+  --sidebar-motion: 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  width: 56px;
+  transition: width var(--sidebar-motion);
+}
+.app-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: var(--sidebar-width);
+  overflow: hidden;
+  transition: width var(--sidebar-motion);
+}
+.app-sidebar-shell[data-open="true"] { --sidebar-width: var(--sidebar-open-width); }
+.app-sidebar-brand {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 160px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 140ms ease, transform var(--sidebar-motion);
+}
+.app-sidebar-toggle {
+  position: absolute;
+  right: 8px;
+  top: 16px;
+  width: 40px;
+  height: 40px;
+}
+.app-sidebar-toggle svg { transform: rotate(180deg); transition: transform var(--sidebar-motion); }
+.app-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding-inline: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background-color 160ms ease;
+}
+.app-sidebar-label {
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 140ms ease, transform var(--sidebar-motion);
+}
+.app-sidebar-account {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height var(--sidebar-motion), opacity 140ms ease;
+}
+.app-sidebar-backdrop { opacity: 0; pointer-events: none; transition: opacity 180ms ease; }
+.app-sidebar-shell[data-open="true"] .app-sidebar-brand,
+.app-sidebar-shell[data-open="true"] .app-sidebar-label { opacity: 1; transform: translateX(0); }
+.app-sidebar-shell[data-open="true"] .app-sidebar-toggle svg { transform: rotate(0); }
+.app-sidebar-shell[data-open="true"] .app-sidebar-account { max-height: 80px; opacity: 1; }
+.app-sidebar-shell[data-open="true"] .app-sidebar-backdrop { opacity: 1; pointer-events: auto; }
+@media (min-width: 768px) {
+  .app-sidebar-shell { --sidebar-open-width: 272px; width: var(--sidebar-width); }
+  .app-sidebar { position: sticky; top: 0; z-index: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar-shell, .app-sidebar, .app-sidebar-brand, .app-sidebar-toggle svg,
+  .app-sidebar-label, .app-sidebar-account, .app-sidebar-backdrop { transition: none; }
+}

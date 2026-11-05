@@ -1,415 +1,370 @@
-import bcryptjs from "bcryptjs";
-import jwt from "jsonwebtoken";
+﻿import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
+import { randomUUID } from "node:crypto";
+import { env } from "../config/env.js";
+import { User } from "../models/User.js";
+import { Session } from "../models/Session.js";
 import {
+  activeUser,
   findUserByEmail,
-  createUser,
-  findUserByVerificationToken,
-  updateUser,
   findUserById,
-  checkEmailExists,
-  findUserByEmailChangeToken,
-  findUserByResetToken,
   findUserByIdWithPassword,
-  findUserByIdWithIsDeleted,
-  updateUserById,
+  checkEmailExists,
 } from "../repositories/userRepository.js";
 import { generateRandomToken } from "../utils/generateRandomToken.js";
+import {
+  generateVerificationCode,
+  hashToken,
+} from "../utils/verificationCode.js";
 import { ApiError } from "../utils/errors.js";
+import { publicUser } from "../utils/publicUser.js";
 import {
-  generateRefreshTokenAndSetCookie,
-  generateTokenAndSetCookie,
+  signRefreshToken,
+  setAuthCookies,
+  clearAuthCookies,
+  verifyJwt,
 } from "../utils/generateTokenAndSetCookie.js";
-import { generateVerificationCode } from "../utils/verificationCode.js";
 import {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  sendResetSuccessEmail,
   sendEmailChangeConfirmationEmail,
   sendEmailChangeNotificationEmail,
   sendEmailChangeSuccessEmail,
-  sendPasswordResetEmail,
-  sendResetSuccessEmail,
-  sendVerificationEmail,
-  sendWelcomeEmail,
 } from "../utils/emails.js";
-import { generateUniqueDeletedEmail } from "../utils/generateUniqueDeletedEmail.js";
 
-// Registre new users
-export const signupService = async (userData, res) => {
-  const { email, password, name } = userData;
+const dummyPasswordHash = await bcrypt.hash(randomUUID(), 12);
+const invalid = () => new ApiError("Invalid or expired token", 400);
+async function startSession(user, res) {
+  const session = new Session({
+    userId: user._id,
+    version: user.sessionVersion || 0,
+    expiresAt: new Date(Date.now() + env.REFRESH_TOKEN_SECONDS * 1000),
+  });
+  const token = signRefreshToken(user, session, randomUUID());
+  session.refreshHash = hashToken(token);
+  await session.save();
+  setAuthCookies(res, user, session, token);
+  return { user: publicUser(user), refreshTokenExpiryDate: session.expiresAt };
+}
+async function requirePassword(userId, password) {
+  const user = await findUserByIdWithPassword(userId);
+  if (!user || !(await bcrypt.compare(password, user.password)))
+    throw new ApiError("Incorrect current password", 400);
+  return user;
+}
+async function revokeUserSessions(userId) {
+  await Session.deleteMany({ userId });
+}
 
-  if (!email || !password || !name) {
-    throw new ApiError("All fields are required", 400);
-  }
-
-  const userAlreadyExists = await findUserByEmail(email);
-
-  if (userAlreadyExists) {
-    throw new ApiError("User already exists", 400);
-  }
-
-  const verificationToken = generateVerificationCode();
-
-  const newUser = {
+export async function signupService({ email, name, password }) {
+  if (await checkEmailExists(email))
+    throw new ApiError(
+      "Email is already in use. Sign in or resend the verification code",
+      409,
+    );
+  const code = generateVerificationCode();
+  const user = await User.create({
     email,
     name,
     password,
-    verificationToken,
-    verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+    verificationToken: hashToken(code),
+    verificationTokenExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+  await sendVerificationEmail(email, code);
+  return publicUser(user);
+}
+export async function verifyEmailService(email, code, res) {
+  // Consume the matching code atomically and bind it to one email, with a five-attempt budget.
+  const filter = {
+    email,
+    ...activeUser,
+    isVerified: false,
+    verificationAttempts: { $lt: 5 },
+    verificationTokenExpiresAt: { $gt: new Date() },
   };
-
-  const user = await createUser(newUser);
-
-  generateTokenAndSetCookie(res, user._id);
-
-  await sendVerificationEmail(user.email, verificationToken);
-
-  return {
-    ...user._doc,
-    password: undefined,
-  };
-};
-
-export const verifyEmailService = async (code) => {
-  const user = await findUserByVerificationToken(code);
-
+  const user = await User.findOneAndUpdate(
+    { ...filter, verificationToken: hashToken(code) },
+    {
+      $set: { isVerified: true },
+      $unset: {
+        verificationToken: 1,
+        verificationTokenExpiresAt: 1,
+        verificationAttempts: 1,
+      },
+    },
+    { returnDocument: "after" },
+  ).select("+sessionVersion");
   if (!user) {
-    throw new ApiError("Invalid or expired verification code", 400);
-  }
-
-  // Check if the user is soft-deleted
-  if (user.isDeleted) {
-    throw new ApiError("Account has been deleted", 403);
-  }
-
-  user.isVerified = true;
-  user.verificationToken = undefined;
-  user.verificationTokenExpiresAt = undefined;
-  await updateUser(user);
-
-  await sendWelcomeEmail(user.email, user.name);
-
-  return {
-    ...user._doc,
-    password: undefined,
-  };
-};
-
-// Login user with email and password
-export const loginService = async (email, password, res) => {
-  const user = await findUserByEmail(email);
-
-  if (!user) {
-    throw new ApiError("Invalid credentials", 400);
-  }
-
-  // Check if the user is soft-deleted
-  if (user.isDeleted) {
-    throw new ApiError("Account has been deleted", 403);
-  }
-
-  const isPasswordValid = await bcryptjs.compare(password, user.password);
-
-  if (!isPasswordValid) {
-    throw new ApiError("Invalid credentials", 400);
-  }
-
-  if (!user.isVerified) {
+    await User.updateOne(filter, { $inc: { verificationAttempts: 1 } });
     throw new ApiError(
-      "You need to verify your account before logging in",
-      403
+      "Invalid or expired code. Request a new code if needed",
+      400,
     );
   }
-
-  generateTokenAndSetCookie(res, user._id);
-
-  const { refreshTokenExpiryDate } = generateRefreshTokenAndSetCookie(
-    res,
-    user._id
-  ); // Get expiry date
-
-  user.lastLogin = new Date();
-  await updateUser(user);
-
-  return {
-    ...user._doc,
-    password: undefined,
-    refreshTokenExpiryDate, // Return expiration date to the frontend
-  };
-};
-
-export const logoutService = (res) => {
-  res.clearCookie("token");
-  res.clearCookie("refreshToken");
-};
-
-export const forgotPasswordService = async (email) => {
+  await sendWelcomeEmail(user.email, user.name);
+  return startSession(user, res);
+}
+export async function loginService(email, password, res) {
   const user = await findUserByEmail(email);
-
-  if (!user) {
-    throw new ApiError("User not found", 400);
-  }
-
-  // Check if the user is soft-deleted
-  if (user.isDeleted) {
-    throw new ApiError("Account has been deleted", 403);
-  }
-
-  const resetToken = generateRandomToken();
-  const resetTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
-
-  user.resetPasswordToken = resetToken;
-  user.resetPasswordExpiresAt = resetTokenExpiresAt;
-
-  await updateUser(user);
-
-  await sendPasswordResetEmail(
-    user.email,
-    `${process.env.CLIENT_URL}/reset-password/${resetToken}`
+  const matches = await bcrypt.compare(
+    password,
+    user?.password || dummyPasswordHash,
   );
-};
-
-export const resetPasswordService = async (token, newPassword) => {
-  const user = await findUserByResetToken(token);
-
-  if (!user) {
-    throw new ApiError("Invalid or expired reset token", 400);
+  if (!user || !matches) throw new ApiError("Invalid email or password", 401);
+  if (!user.isVerified) {
+    const error = new ApiError("Verify your email before signing in", 403);
+    error.code = "VERIFICATION_REQUIRED";
+    throw error;
   }
-
-  user.password = newPassword;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpiresAt = undefined;
-
-  await updateUser(user);
-
+  user.lastLogin = new Date();
+  await user.save();
+  return startSession(user, res);
+}
+export async function logoutService(req, res) {
+  for (const [token, isRefresh] of [
+    [req.cookies.refreshToken, true],
+    [req.cookies.token, false],
+  ]) {
+    try {
+      const claims = verifyJwt(token, isRefresh);
+      if (mongoose.isObjectIdOrHexString(claims.sid))
+        await Session.deleteOne({ _id: claims.sid, userId: claims.sub });
+    } catch (error) {
+      if (
+        !["JsonWebTokenError", "TokenExpiredError", "NotBeforeError"].includes(
+          error.name,
+        )
+      )
+        throw error;
+    }
+  }
+  clearAuthCookies(res);
+}
+export async function forgotPasswordService(email) {
+  const user = await findUserByEmail(email);
+  if (!user) return;
+  const token = generateRandomToken();
+  await User.updateOne(
+    { _id: user._id, ...activeUser },
+    {
+      $set: {
+        resetPasswordToken: hashToken(token),
+        resetPasswordExpiresAt: new Date(Date.now() + 3600000),
+      },
+    },
+  );
+  await sendPasswordResetEmail(
+    email,
+    env.CLIENT_URL + "/reset-password/" + token,
+  );
+}
+export async function resetPasswordService(token, password, res) {
+  const hash = await bcrypt.hash(password, 12);
+  const user = await User.findOneAndUpdate(
+    {
+      resetPasswordToken: hashToken(token),
+      resetPasswordExpiresAt: { $gt: new Date() },
+      ...activeUser,
+    },
+    {
+      $set: { password: hash },
+      $inc: { sessionVersion: 1 },
+      $unset: {
+        resetPasswordToken: 1,
+        resetPasswordExpiresAt: 1,
+        emailChangeToken: 1,
+        emailChangeTokenExpiresAt: 1,
+        pendingEmailChange: 1,
+      },
+    },
+    { returnDocument: "after" },
+  );
+  if (!user) throw invalid();
+  await revokeUserSessions(user._id);
+  clearAuthCookies(res);
   await sendResetSuccessEmail(user.email);
-};
-
-export const checkAuthService = async (userId) => {
-  const user = await findUserById(userId);
-  if (!user) {
-    throw new ApiError("User not found", 400);
-  }
-  return user;
-};
-
-export const resendVerificationEmailService = async (userId) => {
-  const user = await findUserById(userId);
-
-  if (!user) {
-    throw new ApiError("User not found", 404);
-  }
-
-  if (user.isVerified) {
-    throw new ApiError("User is already verified", 400);
-  }
-
-  // Generate new verification token
-  const verificationToken = generateVerificationCode();
-
-  user.verificationToken = verificationToken;
-  user.verificationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
-  await updateUser(user);
-
-  // Send verification email
-  await sendVerificationEmail(user.email, verificationToken);
-};
-
-// Change Password Service
-export const changePasswordService = async (
+}
+export async function checkAuthService(userId) {
+  return publicUser(await findUserById(userId));
+}
+export async function resendVerificationEmailService(email) {
+  const code = generateVerificationCode();
+  const user = await User.findOneAndUpdate(
+    { email, ...activeUser, isVerified: false },
+    {
+      $set: {
+        verificationToken: hashToken(code),
+        verificationTokenExpiresAt: new Date(Date.now() + 600000),
+        verificationAttempts: 0,
+      },
+    },
+    { returnDocument: "after" },
+  );
+  if (user) await sendVerificationEmail(email, code);
+}
+export async function changePasswordService(
   userId,
   oldPassword,
-  newPassword
-) => {
-  const user = await findUserByIdWithPassword(userId);
-
-  if (!user) {
-    throw new ApiError("User not found", 404);
-  }
-
-  const isPasswordCorrect = await bcryptjs.compare(oldPassword, user.password);
-
-  if (!isPasswordCorrect) {
-    throw new ApiError("Incorrect current password", 400);
-  }
-
-  user.password = newPassword;
-  await updateUser(user);
-};
-
-// Update Profile Service
-export const updateProfileService = async (userId, updateData) => {
-  const allowedFields = ["name"];
-  const updates = {};
-
-  allowedFields.forEach((field) => {
-    if (updateData[field]) {
-      updates[field] = updateData[field];
-    }
-  });
-
-  const user = await findUserById(userId);
-
-  if (!user) {
-    throw new ApiError("User not found", 404);
-  }
-
-  Object.assign(user, updates);
-  await updateUser(user);
-
-  return user;
-};
-
-// Delete Account Service
-export const deleteAccountService = async (userId) => {
-  const user = await findUserByIdWithIsDeleted(userId);
-
-  if (!user) {
-    throw new ApiError("User not found", 404);
-  }
-
-  if (user.isDeleted) {
-    throw new ApiError("Account already deleted", 400);
-  }
-
-  // Prepare the updates (including setting password to undefined)
-  const updates = {
-    isDeleted: true,
-    deletedAt: Date.now(),
-    email: await generateUniqueDeletedEmail(user.email),
-    password: undefined,
-    resetPasswordToken: undefined,
-    resetPasswordExpiresAt: undefined,
-    verificationToken: undefined,
-    verificationTokenExpiresAt: undefined,
-    emailChangeToken: undefined,
-    emailChangeTokenExpiresAt: undefined,
-    pendingEmailChange: undefined,
-    isVerified: false,
-  };
-
-  // Perform the update without validation
-  await updateUserById(userId, updates);
-};
-
-// Refresh Auth Token Service
-export const refreshAuthTokenService = async (refreshToken) => {
+  newPassword,
+  res,
+) {
+  const user = await requirePassword(userId, oldPassword);
+  const updated = await User.findOneAndUpdate(
+    { _id: userId, password: user.password, ...activeUser },
+    {
+      $set: { password: await bcrypt.hash(newPassword, 12) },
+      $inc: { sessionVersion: 1 },
+      $unset: {
+        resetPasswordToken: 1,
+        resetPasswordExpiresAt: 1,
+        emailChangeToken: 1,
+        emailChangeTokenExpiresAt: 1,
+        pendingEmailChange: 1,
+      },
+    },
+    { returnDocument: "after" },
+  );
+  if (!updated)
+    throw new ApiError("Account changed. Please sign in again", 409);
+  await revokeUserSessions(userId);
+  clearAuthCookies(res);
+  await sendResetSuccessEmail(user.email);
+}
+export async function updateProfileService(userId, { name }) {
+  const user = await User.findOneAndUpdate(
+    { _id: userId, ...activeUser },
+    { $set: { name } },
+    { returnDocument: "after", runValidators: true },
+  );
+  if (!user) throw new ApiError("Account not found", 404);
+  return publicUser(user);
+}
+export async function deleteAccountService(userId, password, res) {
+  const user = await requirePassword(userId, password);
+  // Explicit $unset removes stored secrets; undefined updates do not.
+  const result = await User.updateOne(
+    { _id: userId, password: user.password, ...activeUser },
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        isVerified: false,
+        email: "deleted-" + randomUUID() + "@deleted.invalid",
+        name: "Deleted account",
+      },
+      $inc: { sessionVersion: 1 },
+      $unset: {
+        password: 1,
+        verificationToken: 1,
+        verificationTokenExpiresAt: 1,
+        verificationAttempts: 1,
+        resetPasswordToken: 1,
+        resetPasswordExpiresAt: 1,
+        emailChangeToken: 1,
+        emailChangeTokenExpiresAt: 1,
+        pendingEmailChange: 1,
+      },
+    },
+  );
+  if (result.modifiedCount !== 1)
+    throw new ApiError("Account changed. Please sign in again", 409);
+  await revokeUserSessions(userId);
+  clearAuthCookies(res);
+}
+export async function refreshAuthTokenService(refreshToken, res) {
+  let claims;
   try {
-    if (!refreshToken) {
-      throw new ApiError("Refresh token not provided", 401);
-    }
-
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-
-    const userId = decoded.userId;
-
-    const user = await findUserById(userId);
-    if (!user || user.isDeleted) {
-      throw new ApiError("User not found or inactive", 401);
-    }
-
-    return userId;
-  } catch (error) {
-    console.error("Error validating refresh token:", error);
-    if (error.name === "TokenExpiredError") {
-      throw new ApiError("Refresh token expired", 401);
-    } else {
-      throw new ApiError("Invalid refresh token", 401);
-    }
+    claims = verifyJwt(refreshToken, true);
+  } catch {
+    throw new ApiError("Session expired. Please sign in again", 401);
   }
-};
-
-// Get User Profile Service
-export const getUserProfileService = async (userId) => {
-  const user = await findUserById(userId);
-
-  if (!user) {
-    throw new ApiError("User not found", 404);
+  if (
+    !mongoose.isObjectIdOrHexString(claims.sub) ||
+    !mongoose.isObjectIdOrHexString(claims.sid)
+  )
+    throw new ApiError("Invalid session", 401);
+  const user = await findUserById(claims.sub);
+  const session = await Session.findOne({
+    _id: claims.sid,
+    userId: claims.sub,
+    expiresAt: { $gt: new Date() },
+  }).select("+refreshHash");
+  if (
+    !user?.isVerified ||
+    !session ||
+    claims.version !== user.sessionVersion ||
+    session.version !== user.sessionVersion
+  )
+    throw new ApiError("Invalid session", 401);
+  const nextToken = signRefreshToken(user, session, randomUUID());
+  const rotated = await Session.findOneAndUpdate(
+    { _id: session._id, refreshHash: hashToken(refreshToken) },
+    { $set: { refreshHash: hashToken(nextToken) } },
+    { returnDocument: "after" },
+  );
+  if (!rotated) {
+    // Reuse of an already rotated refresh token invalidates the session.
+    await Session.deleteOne({ _id: session._id });
+    clearAuthCookies(res);
+    throw new ApiError("Session revoked. Please sign in again", 401);
   }
-
-  return user;
-};
-
-// Check Email Availability Service
-export const checkEmailAvailabilityService = async (email) => {
-  const exists = await checkEmailExists(email);
-  return !exists;
-};
-
-// Confirm Email Change Service
-export const confirmEmailChangeService = async (token) => {
-  const user = await findUserByEmailChangeToken(token);
-
-  if (!user) {
-    throw new ApiError("Invalid or expired email change token", 400);
-  }
-
-  user.email = user.pendingEmailChange;
-  user.pendingEmailChange = undefined;
-  user.emailChangeToken = undefined;
-  user.emailChangeTokenExpiresAt = undefined;
-
-  await updateUser(user);
-
-  // Send success email notification
-  await sendEmailChangeSuccessEmail(user.email);
-
-  return user;
-};
-
-// Request Email Change Service
-export const requestEmailChangeService = async (userId, newEmail) => {
-  const user = await findUserById(userId);
-
-  if (!user) {
-    throw new ApiError("User not found", 404);
-  }
-
-  if (user.email === newEmail) {
-    throw new ApiError(
-      "New email cannot be the same as the current email",
-      400
-    );
-  }
-
-  const emailExists = await checkEmailExists(newEmail);
-
-  if (emailExists) {
-    throw new ApiError("Email is already in use", 400);
-  }
-
-  // Generate email change token
-  const emailChangeToken = generateRandomToken();
-  user.emailChangeToken = emailChangeToken;
-  user.emailChangeTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-  user.pendingEmailChange = newEmail;
-  await updateUser(user);
-
-  // Send confirmation email to new email
-  await sendEmailChangeConfirmationEmail(newEmail, emailChangeToken);
-
-  // Optionally, notify old email
+  setAuthCookies(res, user, rotated, nextToken);
+  return { user: publicUser(user), refreshTokenExpiryDate: rotated.expiresAt };
+}
+export const getUserProfileService = checkAuthService;
+export async function checkEmailAvailabilityService(email) {
+  return !(await checkEmailExists(email));
+}
+export async function requestEmailChangeService(userId, newEmail, password) {
+  const user = await requirePassword(userId, password);
+  if (user.email === newEmail)
+    throw new ApiError("Choose a different email address", 400);
+  if (await checkEmailExists(newEmail))
+    throw new ApiError("Email is already in use", 409);
+  const token = generateRandomToken();
+  await User.updateOne(
+    { _id: userId, ...activeUser },
+    {
+      $set: {
+        pendingEmailChange: newEmail,
+        emailChangeToken: hashToken(token),
+        emailChangeTokenExpiresAt: new Date(Date.now() + 3600000),
+      },
+    },
+  );
+  await sendEmailChangeConfirmationEmail(newEmail, token);
   await sendEmailChangeNotificationEmail(user.email, newEmail);
-
-  return user;
-};
-
-// todo : To test
-export const restoreAccountService = async (userId) => {
-  const user = await User.findById(userId).select("+isDeleted");
-
-  if (!user) {
-    throw new ApiError("User not found", 404);
-  }
-
-  if (!user.isDeleted) {
-    throw new ApiError("Account is not deleted", 400);
-  }
-
-  // Restore the user account
-  user.isDeleted = false;
-  user.deletedAt = undefined;
-
-  // Restore the original email
-  user.email = user.email.replace(/_deleted_\d+$/, "");
-
-  await updateUser(user);
-};
+  return publicUser(await findUserById(userId));
+}
+export async function confirmEmailChangeService(token, res) {
+  const filter = {
+    emailChangeToken: hashToken(token),
+    emailChangeTokenExpiresAt: { $gt: new Date() },
+    ...activeUser,
+  };
+  const pending = await User.findOne(filter);
+  if (!pending?.pendingEmailChange) throw invalid();
+  if (await checkEmailExists(pending.pendingEmailChange))
+    throw new ApiError("Email is already in use. Request another change", 409);
+  const user = await User.findOneAndUpdate(
+    { ...filter, pendingEmailChange: pending.pendingEmailChange },
+    {
+      $set: { email: pending.pendingEmailChange },
+      $inc: { sessionVersion: 1 },
+      $unset: {
+        pendingEmailChange: 1,
+        emailChangeToken: 1,
+        emailChangeTokenExpiresAt: 1,
+        resetPasswordToken: 1,
+        resetPasswordExpiresAt: 1,
+      },
+    },
+    { returnDocument: "after", runValidators: true },
+  );
+  if (!user) throw invalid();
+  await revokeUserSessions(user._id);
+  clearAuthCookies(res);
+  await sendEmailChangeSuccessEmail(user.email);
+}

@@ -1,19 +1,20 @@
-// utils/routes.js
-import Login from "../pages/auth/Login";
-import Register from "../pages/auth/Register";
-import Dashboard from "../pages/dashboard/Dashboard";
-import Profile from "../pages/profile/Profiles";
-import Home from "../pages/home/Home";
+import {
+  Login,
+  Register,
+  Dashboard,
+  Profile,
+  Home,
+  ConfirmEmail,
+  ForgetPassword,
+  ResetPassword,
+  EditProfile,
+  EditEmail,
+  AccountSettings,
+  ConfirmationEmailChange,
+} from "../pages/LazyPages";
+import { Link } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
-import ConfirmEmail from "../pages/auth/ConfirmEmail";
-import ForgetPassword from "../pages/auth/ForgetPassword";
-import ResetPassword from "../pages/auth/ResetPassword";
-import EditProfile from "../pages/profile/EditProfile";
-import EditEmail from "../pages/profile/EditEmail";
-import ConfirmationEmailChange from "../pages/profile/ConfirmationEmailChange";
-
-// Array for public routes
 export const publicRoutes = [
   { path: "/", element: <Home /> },
   {
@@ -40,27 +41,24 @@ export const publicRoutes = [
       </PublicRoute>
     ),
   },
+  { path: "/forget-password", element: <ForgetPassword /> },
+  { path: "/reset-password/:token", element: <ResetPassword /> },
   {
-    path: "/forget-password",
-    element: (
-      <PublicRoute>
-        <ForgetPassword />
-      </PublicRoute>
-    ),
+    path: "/confirm-email-change/:token",
+    element: <ConfirmationEmailChange />,
   },
   {
-    path: "/reset-password/:token",
+    path: "*",
     element: (
-      <PublicRoute>
-        <ResetPassword />
-      </PublicRoute>
+      <main className="p-8 text-center">
+        <h1 className="text-3xl mb-4">Page not found</h1>
+        <Link className="text-primary" to="/">
+          Back to home
+        </Link>
+      </main>
     ),
-  }, // Add this route
+  },
 ];
-
-export const getAllPublicPaths = () => publicRoutes.map((route) => route.path);
-
-// Array for private routes
 export const privateRoutes = [
   {
     path: "/dashboard",
@@ -95,10 +93,10 @@ export const privateRoutes = [
     ),
   },
   {
-    path: "/confirm-email-change/:token",
+    path: "/settings",
     element: (
       <PrivateRoute>
-        <ConfirmationEmailChange />
+        <AccountSettings />
       </PrivateRoute>
     ),
   },

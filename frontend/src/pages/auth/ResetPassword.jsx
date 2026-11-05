@@ -2,7 +2,6 @@ import { useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom"; // For accessing token from URL and navigation
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Helmet } from "react-helmet-async";
 import AuthLayout from "../../layouts/AuthLayout";
 import InputBox from "../../components/inputBox/InputBox";
 import AuthContext from "../../context/AuthContext";
@@ -11,7 +10,7 @@ import { toast } from "react-toastify";
 // Yup schema for validation
 const ResetPasswordSchema = Yup.object().shape({
   password: Yup.string()
-    .min(6, "Password must be at least 6 characters")
+    .min(8, "Password must be at least 8 characters")
     .required("Please enter your password"),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords must match")
@@ -28,8 +27,8 @@ const ResetPassword = () => {
     setSubmitting(true);
     try {
       // Call the resetPasswordWithToken function from AuthProvider
-      resetPasswordWithToken(token, values.password, navigate);
-    } catch (error) {
+      await resetPasswordWithToken(token, values.password, navigate);
+    } catch (_error) {
       toast.error("An error occurred, please try again.");
     } finally {
       setSubmitting(false);
@@ -38,9 +37,8 @@ const ResetPassword = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Reset Password - MERN APP</title>
-      </Helmet>
+      <title>Reset Password - MERN APP</title>
+
       <AuthLayout>
         <div className="reset-password-container">
           <Formik

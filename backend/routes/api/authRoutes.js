@@ -1,53 +1,68 @@
-import express from "express";
-import {
-  login,
-  logout,
-  signup,
-  verifyEmail,
-  resendVerificationEmail,
-  forgotPassword,
-  resetPassword,
-  checkAuth,
-  changePassword,
-  updateProfile,
-  deleteAccount,
-  getUserProfile,
-  checkEmailAvailability,
-  confirmEmailChange,
-  requestEmailChange,
-  refreshAuthToken,
-} from "../../controllers/authController.js";
+﻿import { Router } from "express";
+import * as auth from "../../controllers/authController.js";
 import { verifyToken } from "../../middleware/verifyToken.js";
 import { grantAccess } from "../../middleware/permission.js";
-
-const router = express.Router();
-
-// Refresh authentication token
-router.post("/refresh-token", refreshAuthToken);
-
-// Public Routes
-router.post("/signup", signup);
-router.post("/login", login);
-router.post("/logout", logout);
-
-router.post("/verify-email", verifyEmail);
-router.post("/resend-verification-email", verifyToken, resendVerificationEmail);
-
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password/:token", resetPassword);
-
-router.get("/check-email", checkEmailAvailability);
-router.post("/confirm-email-change", confirmEmailChange);
-
-// Protected Routes (Require Authentication)
-router.get("/check-auth", verifyToken, checkAuth);
-router.get("/me", verifyToken, grantAccess("readOwn", "profile"), getUserProfile);
-
-router.post("/change-password", verifyToken, changePassword);
-router.put("/update-profile", verifyToken, grantAccess("updateOwn", "profile"), updateProfile);
-
-router.post("/request-email-change", verifyToken, requestEmailChange);
-
-router.post("/delete-account", verifyToken, deleteAccount);
-
+import { validate, schemas as s } from "../../middleware/validate.js";
+import {
+  authLimit,
+  emailLimit,
+  loginLimit,
+} from "../../middleware/rateLimits.js";
+const router = Router();
+router.use(authLimit);
+router.post("/signup", validate(s.signup), emailLimit, auth.signup);
+router.post("/login", validate(s.login), loginLimit, auth.login);
+router.post("/logout", auth.logout);
+router.post("/refresh-token", auth.refreshAuthToken);
+router.post("/verify-email", validate(s.verify), auth.verifyEmail);
+router.post(
+  "/resend-verification-email",
+  validate(s.email),
+  emailLimit,
+  auth.resendVerificationEmail,
+);
+router.post(
+  "/forgot-password",
+  validate(s.email),
+  emailLimit,
+  auth.forgotPassword,
+);
+router.post(
+  "/reset-password/:token",
+  validate(s.resetParams, "params"),
+  validate(s.reset),
+  auth.resetPassword,
+);
+router.post(
+  "/confirm-email-change",
+  validate(s.confirmEmail),
+  auth.confirmEmailChange,
+);
+// Deliberately public availability endpoint, rate-limited to reduce enumeration.
+router.get(
+  "/check-email",
+  validate(s.email, "query"),
+  auth.checkEmailAvailability,
+);
+router.use(verifyToken);
+router.get("/check-auth", auth.checkAuth);
+router.get("/me", grantAccess("readOwn", "profile"), auth.getUserProfile);
+router.put(
+  "/update-profile",
+  validate(s.profile),
+  grantAccess("updateOwn", "profile"),
+  auth.updateProfile,
+);
+router.post(
+  "/change-password",
+  validate(s.changePassword),
+  auth.changePassword,
+);
+router.post(
+  "/request-email-change",
+  validate(s.changeEmail),
+  emailLimit,
+  auth.requestEmailChange,
+);
+router.post("/delete-account", validate(s.delete), auth.deleteAccount);
 export default router;

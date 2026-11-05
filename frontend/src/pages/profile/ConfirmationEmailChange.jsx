@@ -1,67 +1,44 @@
-import { useEffect, useState, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
-import DashboardLayout from "../../layouts/DashboardLayout";
+﻿import { useContext, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import AuthLayout from "../../layouts/AuthLayout";
 import AuthContext from "../../context/AuthContext";
-import { toast } from "react-toastify";
-import Loader from "../../components/loader/Loader";
-import { LoaderPinwheelIcon } from "lucide-react";
-
-const ConfirmationEmailChange = () => {
-  const { token } = useParams(); // Get token from URL
-  const { confirmEmailChange } = useContext(AuthContext); // Use the function from AuthProvider
-  const [message, setMessage] = useState("");
-  const [status, setStatus] = useState("loading");
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const validateToken = async () => {
-      try {
-        const response = await confirmEmailChange(token);
-
-        if (response.success) {
-          toast.success(response.message);
-          navigate("/profile");
-        } else {
-          setMessage(response.message);
-          setStatus("error");
-          toast.error(response.message);
-        }
-      } catch (error) {
-        setMessage("An unexpected error occurred.");
-        setStatus("error");
-        toast.error("An unexpected error occurred.");
-      }
-    };
-
-    validateToken();
-  }, [token, confirmEmailChange]);
-
+export default function ConfirmationEmailChange() {
+  const { token } = useParams();
+  const { confirmEmailChange } = useContext(AuthContext);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   return (
     <>
-      <Helmet>
-        <title>Email Change Confirmation - MERN APP</title>
-      </Helmet>
-      <DashboardLayout>
-        <div className="flex justify-center items-center mt-20">
-          {status === "loading" && (
-            <div className="flex flex-col items-center justify-center">
-              <LoaderPinwheelIcon className="animate-spin w-8 h-8 mb-2" />
-              <span className="text-center">
-                Validating token, please wait...
-              </span>
-            </div>
-          )}
-          {status === "error" && (
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-red-600">Error</h1>
-              <p>{message}</p>
-            </div>
-          )}
-        </div>
-      </DashboardLayout>
+      <title>Confirm Email Change - MERN APP</title>
+      <AuthLayout>
+        <h1 className="mb-4 text-2xl font-semibold">Confirm your new email</h1>
+        <p className="mb-4">
+          After confirming, sign in again with your new email address.
+        </p>
+        {error && (
+          <p role="alert" className="mb-4 text-red-600">
+            {error}
+          </p>
+        )}
+        <button
+          disabled={busy || !token}
+          className="w-full rounded bg-primary p-3 text-white disabled:opacity-50"
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const result = await confirmEmailChange(token);
+              if (!result.success) setError(result.message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy ? "Confirming..." : "Confirm email change"}
+        </button>
+        <Link to="/login" className="mt-4 block text-primary">
+          Back to sign in
+        </Link>
+      </AuthLayout>
     </>
   );
-};
-
-export default ConfirmationEmailChange;
+}

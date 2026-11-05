@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -13,7 +12,7 @@ const RegisterSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string()
-    .min(6, "Password must be at least 6 characters")
+    .min(8, "Password must be at least 8 characters")
     .required("Password is required"),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords must match")
@@ -27,7 +26,7 @@ const Register = () => {
   const handleRegister = async (values, { setSubmitting }) => {
     try {
       await register(values, navigate);
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred during registration.");
     } finally {
       setSubmitting(false);
@@ -36,9 +35,8 @@ const Register = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Register - MERN APP</title>
-      </Helmet>
+      <title>Register - MERN APP</title>
+
       <AuthLayout>
         <div className="register-container">
           <Formik

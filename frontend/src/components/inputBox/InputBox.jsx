@@ -1,17 +1,20 @@
-const InputBox = ({ type, name, placeholder, onChange, onBlur, value }) => {
+﻿export default function InputBox({
+  type = "text",
+  name,
+  placeholder,
+  ...props
+}) {
   return (
     <div className="mb-2">
       <input
+        id={name}
         type={type}
         name={name}
+        aria-label={props["aria-label"] || placeholder}
         placeholder={placeholder}
-        onChange={onChange} // Handled by Formik
-        onBlur={onBlur} // Handled by Formik
-        value={value} // Handled by Formik
-        className="w-full px-4 py-2 border rounded-md dark:bg-gray-800 dark:text-white"
+        {...props}
+        className="w-full px-4 py-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:text-white"
       />
     </div>
   );
-};
-
-export default InputBox;
+}
