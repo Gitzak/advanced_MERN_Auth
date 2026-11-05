@@ -97,7 +97,7 @@ const ForgetPassword = () => {
                         Submitting...
                       </>
                     ) : (
-                      "Register"
+                      "Send reset link"
                     )}
                   </button>
                 </div>
